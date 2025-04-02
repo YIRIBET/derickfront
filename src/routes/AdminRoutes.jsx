@@ -8,6 +8,7 @@ import RolesPage from "../Components/admin/Role/RolesPage";
 import RoleForm from "../Components/admin/Role/RoleForm";
 import RestaurantsPage from "../Components/admin/Restaurant/RestaurantsPage";
 import RestaurantForm from "../Components/admin/Restaurant/RestaurantForm";
+import Login from "../pages/Admin/Login";
 {/*
     import RolesPage from "../pages/Admin/RolesPage";
 import RestaurantsPage from "../pages/Admin/RestaurantsPage";
@@ -37,12 +38,12 @@ const AdminRoutes = () => {
         <Route path="roles" element={<RolesPage roles={roles} setRoles={setRoles} />} />
         <Route path="roles/new" element={<RoleForm roles={roles} setRoles={setRoles} />} />
         <Route path="roles/edit/:id" element={<RoleForm roles={roles} setRoles={setRoles} />} />
-
+        <Route path="login" element={<Login />} />
         
       <Route path="restaurants" element={<RestaurantsPage restaurants={restaurants} setRestaurants={setRestaurants} />} />
         <Route path="restaurants/new" element={<RestaurantForm restaurants={restaurants} setRestaurants={setRestaurants} />} />
         <Route path="restaurants/edit/:id" element={<RestaurantForm restaurants={restaurants} setRestaurants={setRestaurants} />} />
-     
+       
 
       </Route>
 
