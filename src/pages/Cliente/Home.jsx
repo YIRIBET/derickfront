@@ -1,59 +1,256 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import Navbar from "../../Components/Navbar";
+import Cart from "../../Components/Cart";
+import Swal from "sweetalert2";
 
 const Home = () => {
+  const navigate = useNavigate();
+  const [restaurants, setRestaurants] = useState([]);
+  const [newRestaurants, setNewRestaurants] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showCart, setShowCart] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+
+    if (!token) {
+      setError("No hay token disponible");
+      setLoading(false);
+      return;
+    }
+
+    fetch("http://localhost:8000/restaurante/api/", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          const errorText = await response.text(); // Captura el error
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        console.log("Datos recibidos:", data); // Para depuración
+        if (Array.isArray(data)) {
+          setRestaurants(data);
+        } else {
+          throw new Error("Formato de datos inesperado");
+        }
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Error en la API:", err);
+        setError("Error al obtener los restaurantes: " + err.message);
+        setLoading(false);
+      });
+  }, []);
+
   return (
-    <div className=" bg-gray-100 h-screen w-full fixed left-0 ">
-      <h1 className="text-4xl font-bold">
-        Deliciosa comida, entregada a domicilio
-      </h1>
-      <p className="text-lg">Elige entre cientos de restaurantes en tu zona</p>
-      <div className="mx-auto max-w-xl px-4 py-16 sm:px-6 sm:py-24 lg:max-w-7xl lg:px-8">
-        <p className="text-2xl text-left  font-bold tracking-tight">Restaurantes populares</p>
-        <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
-          <div className="group relative">
-            <img
-              src="https://ecook.mx/wp-content/uploads/2024/07/receta-de-hamburguesa.png"
-              alt="Tall slender porcelain bottle with natural clay textured body and cork stopper."
-              className="w-full h-80 object-center object-cover"
-            />
-            <div className="mt-4 flex justify-between">
-              <div>
-                <h3 className="text-sm text-gray-700">
-                  <a href="/Menu">
-                    <span aria-hidden="true" className="absolute inset-0" />
-                    Restaurante 1 
-                  </a>
-                </h3>
-                <p className="mt-1 text-sm text-gray-500">Comida rápida</p>
+    <div className="relative min-h-screen">
+      <Navbar onCartClick={() => setShowCart(!showCart)} />
+      <div className="flex min-h-screen flex-col w-full start-0">
+        <h1 className="text-4xl font-bold text-center">
+          Deliciosa comida, entregada a domicilio
+        </h1>
+        <p className="text-lg text-center mt-2">
+          Elige entre cientos de restaurantes en tu zona
+        </p>
+
+        {/* Restaurantes Populares */}
+        <div className="w-full py-12 md:py-20">
+          <p className="text-2xl font-bold text-start mb-6">
+            Restaurantes populares
+          </p>
+          <div className="grid grid-cols-1 gap-4 overflow-x-auto xl:grid-cols-4">
+            {restaurants.map((restaurant) => (
+              <div key={restaurant.id} className="p-4 rounded-xl">
+                <div className="aspect-[4/3] overflow-hidden rounded-xl">
+                  <img
+                    onClick={() => navigate(`/menu/${restaurant.id}`)}
+                    src={restaurant.logo}
+                    alt={`${restaurant.name} imagen`}
+                    className="w-full h-full object-cover transition-transform hover:scale-105 cursor-pointer"
+                  />
+                </div>
+                <div className="mt-4 flex justify-between">
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-700">
+                      <a href={`/menu/${restaurant.id}`} className="relative">
+                        {restaurant.name}
+                      </a>
+                    </h3>
+                    <p className="mt-1 text-sm text-gray-500">
+                      {restaurant.description}
+                    </p>
+                  </div>
+                  <p className="text-sm font-medium text-gray-900">
+                    {restaurant.address}
+                  </p>
+                </div>
               </div>
-              <p className="text-sm font-medium text-gray-900">$12</p>
+            ))}
+          </div>
+        </div>
+
+        {/* Restaurantes Nuevos */}
+        <div className="w-full py-12 lg:py-32 bg-gray-100">
+          <div className="container">
+            <div className="flex flex-col items-center justify-center text-center">
+              <div className="space-y-2">
+                <h2 className="text-3xl font-bold tracking-tighter md:text-4xl">
+                  Descubre los restaurantes más recientes
+                </h2>
+                <p className="max-w-[900px] text-muted-foreground md:text-xl">
+                  Explora las mejores opciones gastronómicas que han llegado a nuestra plataforma.
+                </p>
+              </div>
+            </div>
+            <div className="mx-auto grid max-w-5xl gap-6 py-12 lg:grid-cols-3">
+              {newRestaurants.map((restaurant) => (
+                <div
+                  key={restaurant.id}
+                  className="flex flex-col justify-between rounded-lg border p-6 shadow-sm border-gray-200"
+                >
+                  <div className="space-y-4">
+                    <div className="aspect-[4/3] overflow-hidden rounded-xl">
+                      <img
+                        src={restaurant.logo}
+                        alt={`${restaurant.name} imagen`}
+                        className="w-full h-full object-cover transition-transform hover:scale-105"
+                      />
+                    </div>
+                    <h3 className="text-xl font-bold text-center">
+                      <a href={`/menu/${restaurant.id}`} className="relative">
+                        {restaurant.name}
+                      </a>
+                    </h3>
+                    <p className="text-center text-muted-foreground">
+                      {restaurant.description}
+                    </p>
+                    <p className="text-sm font-medium text-gray-900 text-center">
+                      {restaurant.address}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-         {/*} {products.map((product) => (
-            <div key={product.id} className="group relative">
-              <img
-                alt={product.imageAlt}
-                src={product.imageSrc}
-                className="aspect-square w-full rounded-md bg-gray-200 object-cover group-hover:opacity-75 lg:aspect-auto lg:h-80"
-              />
-              <div className="mt-4 flex justify-between">
-                <div>
-                  <h3 className="text-sm text-gray-700">
-                    <a href={product.href}>
-                      <span aria-hidden="true" className="absolute inset-0" />
-                      {product.name}
-                    </a>
-                  </h3>
-                  <p className="mt-1 text-sm text-gray-500">{product.color}</p>
+        </div>
+
+        {/* Sección CTA */}
+        <section className="w-full py-12 md:py-24 lg:py-32 bg-muted">
+          <div className="container px-4 md:px-6">
+            <div className="grid gap-6 lg:grid-cols-2 lg:gap-12">
+              <div className="flex flex-col justify-center space-y-4">
+                <h2 className="text-3xl font-bold text-start tracking-tighter">
+                  Comience hoy mismo
+                </h2>
+                <p className="max-w-[600px] text-muted-foreground text-start md:text-xl">
+                  Únase a miles de empresas que ya están aprovechando nuestra plataforma para crecer.
+                </p>
+              </div>
+              <div className="mx-auto w-full max-w-md space-y-8 rounded-xl p-5 m-4">
+                <div className="text-center">
+                  <h2 className="text-3xl font-bold">Registrate con nosotros</h2>
                 </div>
-                <p className="text-sm font-medium text-gray-900">{product.price}</p>
+
+                <form className="mt-8 space-y-6">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label
+                        htmlFor="name"
+                        className="block mb-2 text-sm text-start font-medium text-gray-900 dark:text-white"
+                      >
+                        Nombre completo
+                      </label>
+                      <input
+                        id="name"
+                        type="text"
+                        placeholder="Juan Perez"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label
+                        htmlFor="email"
+                        className="block mb-2 text-sm text-start font-medium text-gray-900 dark:text-white"
+                      >
+                        Correo electrónico
+                      </label>
+                      <input
+                        id="email"
+                        type="email"
+                        placeholder="nombre@ejemplo.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label
+                        htmlFor="password"
+                        className="block mb-2 text-sm text-start font-medium text-gray-900 dark:text-white"
+                      >
+                        Contraseña
+                      </label>
+                      <div className="relative">
+                        <input
+                          id="password"
+                          type={showPassword ? "text" : "password"}
+                          placeholder="••••••••"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        >
+                          <span className="sr-only">
+                            {showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button type="submit" className="w-full bg-black text-white rounded-xl p-3">
+                    Registrar
+                  </button>
+
+                  <div className="text-center text-sm">
+                    ¿Ya tienes una cuenta?{" "}
+                    <a href="#" className="font-medium text-primary hover:text-primary/90">
+                      Inicia sesión
+                    </a>
+                  </div>
+                </form>
               </div>
             </div>
-          ))}*/}
-        </div>
+          </div>
+        </section>
       </div>
+
+      {/* Condicionalmente mostrar el carrito */}
+      {showCart && <Cart />}
     </div>
-    
   );
 };
 
