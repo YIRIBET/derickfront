@@ -1,17 +1,33 @@
-import React, { useState, useRef, useEffect } from "react";
-import { Link } from "react-router-dom";
-import Home from "../pages/Cliente/Home"
+import React, { useState, useRef, useEffect, useContext } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import AuthContext from "../config/context/auth-context"; // Asumiendo que tienes este contexto para manejar la autenticación
 import Pythones from "../assets/pythonEsLogo.png";
-
 
 const Navbar = ({ onCartClick }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const { dispatch } = useContext(AuthContext);
+  const { user } = useContext(AuthContext); // Aquí se obtiene la información del usuario
+  const nav = useNavigate();
+  const [redirectToHome, setRedirectToHome] = useState(false);  // Nuevo estado para la redirección
+  
+  const logout = () => {
+    dispatch({ type: 'SIGNOUT', signed: false });
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    setRedirectToHome(true);
+  };
 
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
   };
+
+  useEffect(() => {
+    if (redirectToHome) {
+    nav("/")
+    }
+  }, [redirectToHome, nav]);  // Dependencias para el useEffect
 
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
@@ -32,11 +48,11 @@ const Navbar = ({ onCartClick }) => {
   }, []);
 
   return (
-    <nav className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 text-black p-3 w-full fixed top-0 start-0 shadow-md">
+    <nav style={{zIndex:'15'}} className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 text-black p-3 w-full fixed top-0 start-0 shadow-md">
       <div className="container mx-auto flex justify-between items-center">
         <Link to="/" className="text-xl font-bold">
-        <img src={Pythones}               className="h-10 sm:h-12 md:h-14 object-contain rounded-xl transition-all duration-300" 
- alt="Pythones Logo" />
+          <img src={Pythones} className="h-10 sm:h-12 md:h-14 object-contain rounded-xl transition-all duration-300"
+            alt="Pythones Logo" />
         </Link>
 
         <div className="relative w-full sm:w-1/2 lg:w-1/3">
@@ -67,8 +83,8 @@ const Navbar = ({ onCartClick }) => {
 
         <div className="flex items-center gap-4 sm:gap-6">
           {/* Botón del carrito */}
-          <button             className="p-1 hover:bg-gray-100 rounded-full transition-colors"
- onClick={onCartClick}>
+          <button className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+            onClick={onCartClick}>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
@@ -87,8 +103,8 @@ const Navbar = ({ onCartClick }) => {
 
           {/* Botón de perfil con dropdown */}
           <div className="relative" ref={dropdownRef}>
-            <button 
-              className="p-1 hover:bg-gray-100 rounded-full transition-colors focus:outline-none"
+            <button
+              className="cursor-pointer p-1 hover:bg-gray-100 rounded-full transition-colors focus:outline-none"
               onClick={toggleDropdown}
               aria-expanded={isDropdownOpen}
               aria-haspopup="true"
@@ -111,23 +127,22 @@ const Navbar = ({ onCartClick }) => {
 
             {/* Dropdown */}
             {isDropdownOpen && (
-              <div 
-                className="absolute right-0 z-10 mt-2 w-44 bg-white divide-y divide-gray-100 rounded-lg shadow-sm dark:bg-gray-700 dark:divide-gray-600"
+              <div
+                className=" absolute right-0 z-10 mt-2 w-44 bg-white divide-y divide-gray-100 rounded-lg shadow-sm dark:bg-gray-700 dark:divide-gray-600"
               >
                 <ul className="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDividerButton">
                   <li>
-                    <Link 
-                      to="/" 
+                    <Link
+                      to="/"
                       className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
-                      href="/Home"
-                     // onClick={() => setIsDropdownOpen(false)}
+                      onClick={() => setIsDropdownOpen(false)}
                     >
                       Inicio
                     </Link>
                   </li>
                   <li>
-                    <Link 
-                      to="/perfil" 
+                    <Link
+                      to="/perfil"
                       className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
                       onClick={() => setIsDropdownOpen(false)}
                     >
@@ -135,8 +150,8 @@ const Navbar = ({ onCartClick }) => {
                     </Link>
                   </li>
                   <li>
-                    <Link 
-                      to="/earnings" 
+                    <Link
+                      to="/earnings"
                       className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
                       onClick={() => setIsDropdownOpen(false)}
                     >
@@ -145,13 +160,23 @@ const Navbar = ({ onCartClick }) => {
                   </li>
                 </ul>
                 <div className="py-2">
-                  <Link 
-                    to="/logout" 
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white"
-                    onClick={() => setIsDropdownOpen(false)}
-                  >
-                    Cerrar sesión
-                  </Link>
+                  {!user.signed ? (
+                    <Link
+                      to="/login"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white"
+                      onClick={() => setIsDropdownOpen(false)}
+                    >
+                      Iniciar sesión
+                    </Link>
+                  ) : (
+
+                    <Link
+                      className=" block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white"
+                      onClick={() => logout()}
+                    >
+                      Cerrar sesión
+                    </Link>
+                  )}
                 </div>
               </div>
             )}

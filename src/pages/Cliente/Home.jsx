@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useContext } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../../Components/Navbar";
 import Cart from "../../Components/Cart";
 import Swal from "sweetalert2";
+import AuthContext from '../../config/context/auth-context';
+import AxiosClient from "../../config/http-client/axios-client";
 
 const Home = () => {
-  const navigate = useNavigate();
+
   const [restaurants, setRestaurants] = useState([]);
   const [newRestaurants, setNewRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,48 +17,51 @@ const Home = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const { user } = useContext(AuthContext) || {};
 
+  const isUserSignedIn = user?.signed || false;
+  const navigate = useNavigate();
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-
-    if (!token) {
+    // Obtén el token desde localStorage
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+  
+    if (!storedUser || !storedUser.access) {
       setError("No hay token disponible");
       setLoading(false);
       return;
     }
-
-    fetch("http://localhost:8000/restaurante/api/", {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
+  
+    setLoading(true); // Inicia la carga antes de hacer la solicitud
+  
+    // Realiza la solicitud con Axios
+    AxiosClient({
+      url: "restaurante/api/", // La URL que necesitas
+      method: 'GET',
     })
-      .then(async (response) => {
-        if (!response.ok) {
-          const errorText = await response.text(); // Captura el error
-          throw new Error(`HTTP ${response.status}: ${errorText}`);
-        }
-        return response.json();
-      })
-      .then((data) => {
-        console.log("Datos recibidos:", data); // Para depuración
-        if (Array.isArray(data)) {
-          setRestaurants(data);
-        } else {
-          throw new Error("Formato de datos inesperado");
-        }
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Error en la API:", err);
-        setError("Error al obtener los restaurantes: " + err.message);
-        setLoading(false);
-      });
+    .then((response) => {
+      // Axios maneja automáticamente el .data, así que no necesitas hacer .json() ni .text()
+      console.log("Datos recibidos:", response.data);
+  
+      if (Array.isArray(response.data)) {
+        setRestaurants(response.data);
+      } else {
+        throw new Error("Formato de datos inesperado");
+      }
+    })
+    .catch((err) => {
+      console.error("Error en la API:", err);
+      setError("Error al obtener los restaurantes: " + err.message);
+    })
+    .finally(() => {
+      setLoading(false); // Siempre se ejecuta después de la solicitud
+    });
   }, []);
+  
+
+
 
   return (
-    <div className="relative min-h-screen">
+    <div className={`${!isUserSignedIn ? 'mt-[140px]' : ''} relative min-h-screen`} >
       <Navbar onCartClick={() => setShowCart(!showCart)} />
       <div className="flex min-h-screen flex-col w-full start-0">
         <h1 className="text-4xl font-bold text-center">
@@ -74,7 +79,7 @@ const Home = () => {
           <div className="grid grid-cols-1 gap-4 overflow-x-auto xl:grid-cols-4">
             {restaurants.map((restaurant) => (
               <div key={restaurant.id} className="p-4 rounded-xl">
-                <div className="aspect-[4/3] overflow-hidden rounded-xl">
+                <div className="aspect-[4/3] overflow-hidden rounded-xl relative z-10">
                   <img
                     onClick={() => navigate(`/menu/${restaurant.id}`)}
                     src={restaurant.logo}
@@ -82,6 +87,7 @@ const Home = () => {
                     className="w-full h-full object-cover transition-transform hover:scale-105 cursor-pointer"
                   />
                 </div>
+
                 <div className="mt-4 flex justify-between">
                   <div>
                     <h3 className="text-sm font-medium text-gray-700">
@@ -231,15 +237,17 @@ const Home = () => {
                     </div>
                   </div>
 
-                  <button type="submit" className="w-full bg-black text-white rounded-xl p-3">
+                  <button type="submit" className="cursor-pointer w-full bg-black text-white rounded-xl p-3">
                     Registrar
                   </button>
 
                   <div className="text-center text-sm">
                     ¿Ya tienes una cuenta?{" "}
-                    <a href="#" className="font-medium text-primary hover:text-primary/90">
+                    <Link to={"/login"}>
                       Inicia sesión
-                    </a>
+
+                    </Link>
+
                   </div>
                 </form>
               </div>

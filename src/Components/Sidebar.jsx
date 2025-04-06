@@ -3,15 +3,15 @@ const Sidebar =()=>{
         <>
         <aside
         id="logo-sidebar"
-        class="fixed top-5 left-0 z-40 w-64 h-screen pt-20 transition-transform -translate-x-full bg-white border-r border-gray-200 sm:translate-x-0 dark:bg-gray-800 dark:border-gray-700"
+        className="fixed top-5 left-0 z-40 w-64 h-screen pt-20 transition-transform -translate-x-full bg-white border-r border-gray-200 sm:translate-x-0 dark:bg-gray-800 dark:border-gray-700"
         aria-label="Sidebar"
       >
-        <div class="h-full px-3 pb-4 overflow-y-auto bg-white dark:bg-gray-800">
-          <ul class="space-y-2 font-medium mb-5">
+        <div className="h-full px-3 pb-4 overflow-y-auto bg-white dark:bg-gray-800">
+          <ul className="space-y-2 font-medium mb-5">
             <li>
               <a
                 href="#"
-                class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+                className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -19,7 +19,7 @@ const Sidebar =()=>{
                   viewBox="0 0 24 24"
                   stroke-width="1.5"
                   stroke="currentColor"
-                  class="size-6"
+                  className="size-6"
                 >
                   <path
                     stroke-linecap="round"
@@ -28,16 +28,16 @@ const Sidebar =()=>{
                   />
                 </svg>
 
-                <span class="flex-1 ms-3 whitespace-nowrap">Inicio</span>
+                <span className="flex-1 ms-3 whitespace-nowrap">Inicio</span>
               </a>
             </li>
             <li>
               <a
                 href="#"
-                class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+                className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
               >
                 <svg
-                  class="w-6 h-6 text-gray-800 dark:text-white"
+                  className="w-6 h-6 text-gray-800 dark:text-white"
                   aria-hidden="true"
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
@@ -54,16 +54,16 @@ const Sidebar =()=>{
                   />
                 </svg>
 
-                <span class="flex-1 ms-3 whitespace-nowrap">Menus</span>
+                <span className="flex-1 ms-3 whitespace-nowrap">Menus</span>
               </a>
             </li>
             <li>
               <a
                 href="#"
-                class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+                className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
               >
                 <svg
-                  class="w-6 h-6 text-gray-800 dark:text-white"
+                  className="w-6 h-6 text-gray-800 dark:text-white"
                   aria-hidden="true"
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
@@ -80,13 +80,13 @@ const Sidebar =()=>{
                   />
                 </svg>
 
-                <span class="flex-1 ms-3 whitespace-nowrap">Comida</span>
+                <span className="flex-1 ms-3 whitespace-nowrap">Comida</span>
               </a>
             </li>
             <li>
               <a
                 href="#"
-                class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+                className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -94,7 +94,7 @@ const Sidebar =()=>{
                   viewBox="0 0 24 24"
                   stroke-width="1.5"
                   stroke="currentColor"
-                  class="size-6"
+                  className="size-6"
                 >
                   <path
                     stroke-linecap="round"
@@ -103,7 +103,7 @@ const Sidebar =()=>{
                   />
                 </svg>
 
-                <span class="flex-1 ms-3 whitespace-nowrap">Cerrar sesión</span>
+                <span className="flex-1 ms-3 whitespace-nowrap">Cerrar sesión</span>
               </a>
             </li>
           </ul>

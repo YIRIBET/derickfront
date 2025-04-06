@@ -1,42 +1,26 @@
-import { useState } from "react";
-import React from "react";
-import { BrowserRouter as Router, Route, Routes, Link } from "react-router-dom";
-import "./App.css";
-import Home from "./pages/Cliente/Home";
-import Menu from "./pages/Cliente/Menu";
-//import Menus from "./pages/Restaurantero/Menu";
-import Orders from "./pages/Cliente/Orders";
-import Navbar from "./Components/Navbar";
-import Footer from "./Components/Footer";
-import Cart from "./Components/Cart"
-import Profile from "./pages/Cliente/Profile";
-import Login from "./Components/Login"
-import Register from "./Components/Register";
-import Food from "./pages/Cliente/Food";
-import Dashboard from "./pages/Restaurantero/Dashbord";
+import React, { useEffect, useReducer } from 'react';
+import AuthContext from './config/context/auth-context';
+import { authManager } from './config/context/auth-manager';
+import AppRouter from './routes/AppRoutes';
+
+const init = () => {
+  const storedUser = localStorage.getItem('user');
+  return storedUser ? JSON.parse(storedUser) : { signed: false }; // Si no hay usuario, inicializa con signed: false
+};
 
 function App() {
-  return (
-    <Router>
-      <Navbar />
-     
-      <div className="pt-14">
+  const [user, dispatch] = useReducer(authManager, { signed: false }, init);
 
-      <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/" element={<Home />} />
-          <Route path="/register" element ={<Register/>}/>
-          <Route path="/Menu/:id" element={<Menu />} />
-          <Route path="/dashbord" element={<Dashboard />} />
-          {/*<Route path="/menus" element={<Menus />} />*/}
-          <Route path="/food" element={<Food />} />
-          <Route path="/order" element={<Orders />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/perfil" element={<Profile/>}/>
-        </Routes>
-      </div>
-      <Footer />
-    </Router>
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem('user', JSON.stringify(user)); // Guarda el estado de usuario en localStorage
+    }
+  }, [user]);
+
+  return (
+    <AuthContext.Provider value={{ user, dispatch }}>
+      <AppRouter />
+    </AuthContext.Provider>
   );
 }
 
