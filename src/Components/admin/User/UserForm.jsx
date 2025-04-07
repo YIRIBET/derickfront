@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 const UserForm = ({ onSubmit }) => {
@@ -6,35 +6,60 @@ const UserForm = ({ onSubmit }) => {
     const { id } = useParams();
     const isEditing = id !== undefined;
     
+    const [formData, setFormData] = useState({
+      name: "",
+      role: 2,
+      email: "",
+      password: "",
+      startDate: "",
+      status: true,
+    });
+
     const initialState = { name: "", role: "", email: "" };
-    const [formData, setFormData] = useState(initialState);
 
-    // Si es edición, cargar los datos del usuario
-  useEffect(() => {
-    if (isEditing) {
-      const userToEdit = users.find(user => user.id === parseInt(id));
-      if (userToEdit) {
-        setFormData(userToEdit);
+    useEffect(() => {
+      if (isEditing) {
+        // Aquí podrías hacer un fetch al backend para traer los datos del usuario a editar
       }
-    }
-  }, [id, users]);
+    }, [id]);
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+    const handleChange = (e) => {
+      const { name, value, type, checked } = e.target;
+      setFormData({
+        ...formData,
+        [name]: type === "checkbox" ? checked : value,
+      });
+    };
+  
 
 
-  // Guardar usuario
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (isEditing) {
-      setUsers(users.map(user => (user.id === parseInt(id) ? formData : user)));
-    } else {
-      setUsers([...users, { ...formData, id: users.length + 1 }]);
-    }
-    navigate("/admin/users");
-  };
-
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+  
+      if (!isEditing) {
+        try {
+          const response = await fetch("http://127.0.0.1:8000/users/api/", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(formData),
+          });
+  
+          if (!response.ok) {
+            throw new Error("Error al crear el usuario");
+          }
+  
+          alert("Usuario creado correctamente");
+          navigate("/admin/users");
+        } catch (error) {
+          console.error(error);
+          alert("Hubo un error al crear el usuario.");
+        }
+      } else {
+        //Logica para PUT Edicion
+      }
+    };
 
   return (
     <form onSubmit={handleSubmit} className="p-6 bg-base-100 rounded-lg shadow-md">
@@ -93,16 +118,16 @@ const UserForm = ({ onSubmit }) => {
           </g>
         </svg>
         <select
-          name="rol"
+          name="role"
           required
-          value={formData.rol}
+          value={formData.role}
           onChange={handleChange}
           className="select select-bordered w-full"
         >
           <option value="" disabled>Selecciona un rol</option>
-          <option value="Administrador">Administrador</option>
-          <option value="Editor">Editor</option>
-          <option value="Usuario">Usuario</option>
+          <option value="1">Administrador</option>
+          <option value="2">Editor</option>
+          <option value="3">Usuario</option>
         </select>
       </label>
       <p className="validator-hint">Elige un rol para el usuario.</p>
@@ -135,6 +160,41 @@ const UserForm = ({ onSubmit }) => {
         />
       </label>
       <p className="validator-hint hidden">Ingrese una dirección de correo válida.</p>
+
+{/* Contraseña */}
+<label className="input validator mb-4">
+        <input
+          type="password"
+          name="password"
+          placeholder="Contraseña"
+          required
+          value={formData.password}
+          onChange={handleChange}
+        />
+      </label>
+      <p className="validator-hint hidden">Ingrese una contraseña válida.</p>
+
+      {/* Fecha de Inicio */}
+      <label className="input validator mb-4">
+        <input
+          type="datetime-local"
+          name="startDate"
+          required
+          value={formData.startDate}
+          onChange={handleChange}
+        />
+      </label>
+
+      {/* Estado */}
+      <label className="flex items-center gap-2 mb-4">
+        <input
+          type="checkbox"
+          name="status"
+          checked={formData.status}
+          onChange={handleChange}
+        />
+        <span>Activo</span>
+      </label>
 
       {/* Botón de Envío */}
       <button className="btn btn-primary btn-wide" type="submit">
