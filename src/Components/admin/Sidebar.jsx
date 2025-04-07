@@ -7,7 +7,7 @@ const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(true);
 
   return (
-    <div className={`h-screen  bg-primary text-primary-content shadow-sm ${isOpen ? "w-64" : "w-20"} transition-all duration-300 p-4 flex flex-col`}>
+    <div className={`h-screen  bg-orange-400 text-primary-content shadow-sm ${isOpen ? "w-64" : "w-20"} transition-all duration-300 p-4 flex flex-col`}>
       {/* Botón para expandir/cerrar */}
       <button 
         className="btn btn-square btn-ghost mb-4 self-end"
