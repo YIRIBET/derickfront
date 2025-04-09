@@ -19,8 +19,16 @@ const UserForm = () => {
   const [modalInfo, setModalInfo] = useState({ show: false, title: "", message: "", variant: "success" });
 
   useEffect(() => {
-    if (isEditing) {
-      fetch(`http://127.0.0.1:8000/users/api/${id}/`)
+    const token = localStorage.getItem("accessToken"); // Obtener el token
+
+    if (isEditing && token) {
+      fetch(`http://127.0.0.1:8000/users/api/${id}/`, {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`, // Añadir el token a los encabezados
+          "Content-Type": "application/json",
+        },
+      })
         .then(res => res.json())
         .then(data => setFormData(data))
         .catch(() =>
@@ -31,6 +39,13 @@ const UserForm = () => {
             variant: "error",
           })
         );
+    } else if (!token) {
+      setModalInfo({
+        show: true,
+        title: "Error",
+        message: "No hay token disponible.",
+        variant: "error",
+      });
     }
   }, [id]);
 
@@ -63,11 +78,24 @@ const UserForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const token = localStorage.getItem("accessToken"); // Obtener el token
+
+    if (!token) {
+      setModalInfo({
+        show: true,
+        title: "Error",
+        message: "No hay token disponible.",
+        variant: "error",
+      });
+      return;
+    }
+
     try {
       const response = await fetch("http://127.0.0.1:8000/users/api/", {
         method: isEditing ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
         },
         body: JSON.stringify(formData),
       });
@@ -92,7 +120,6 @@ const UserForm = () => {
       });
     }
   };
-
   return (
     <>
           <form onSubmit={handleSubmit} className="p-6 bg-base-100 rounded-lg shadow-md">
@@ -118,14 +145,14 @@ const UserForm = () => {
         </svg>
         <input
           type="text"
-          name="nombre"
+          name="name"
           required
           placeholder="Nombre Completo"
           pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ ]{3,50}"
           minLength="3"
           maxLength="50"
           title="Solo letras y espacios, entre 3 y 50 caracteres"
-          value={formData.nombre}
+          value={formData.name}
           onChange={handleChange}
         />
       </label>

@@ -10,6 +10,7 @@ const RoleForm = ({ roles, setRoles }) => {
   const initialState = { name: "" };
   const [formData, setFormData] = useState(initialState);
   const [errorMessage, setErrorMessage] = useState('');
+  const token = localStorage.getItem('authToken');
   // Si es edición, cargar los datos del rol
   useEffect(() => {
     if (isEditing) {
@@ -29,13 +30,43 @@ const RoleForm = ({ roles, setRoles }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (isEditing) {
-      setRoles(roles.map(role => (role.id === parseInt(id) ? formData : role)));
+      fetch(`http://127.0.0.1:8000/role/api/${id}/`, {
+        method: "PUT",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error("Error al guardar los cambios");
+          setRoles(roles.map(role => (role.id === parseInt(id) ? formData : role)));
+          navigate("/admin/roles");
+        })
+        .catch((err) => {
+          console.error(err);
+          setErrorMessage("Error al guardar los cambios");
+        });
     } else {
-      setRoles([...roles, { ...formData, id: roles.length + 1 }]);
+      fetch("http://127.0.0.1:8000/role/api/", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error("Error al agregar el rol");
+          setRoles([...roles, { ...formData, id: roles.length + 1 }]);
+          navigate("/admin/roles");
+        })
+        .catch((err) => {
+          console.error(err);
+          setErrorMessage("Error al agregar el rol");
+        });
     }
-    navigate("/admin/roles");
   };
-
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">{isEditing ? "Editar Rol" : "Nuevo Rol"}</h1>

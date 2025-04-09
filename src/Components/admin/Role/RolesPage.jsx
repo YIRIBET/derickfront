@@ -14,10 +14,17 @@ const RolesPage = () => {
   const [roleToDelete, setRoleToDelete] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
+  const token = localStorage.getItem('authToken');
 
   // Obtener roles desde el backend
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/role/api/")
+    fetch("http://localhost:8000/role/api/", {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    })
       .then((res) => {
         if (!res.ok) throw new Error("Error al obtener roles");
         return res.json();
@@ -29,7 +36,7 @@ const RolesPage = () => {
         console.error(err);
         setRoles(fallbackRoles);
       });
-  }, []);
+  }, [token]);
 
   // Abrir modal con ID del rol a eliminar
   const openDeleteModal = (id) => {
@@ -42,6 +49,10 @@ const RolesPage = () => {
   if (roleToDelete !== null) {
     fetch(`http://127.0.0.1:8000/role/api/${roleToDelete}/`, {
       method: "DELETE",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
     })
       .then((res) => {
         if (!res.ok) throw new Error("No se pudo eliminar el rol");

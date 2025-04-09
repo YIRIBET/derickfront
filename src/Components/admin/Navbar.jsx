@@ -1,6 +1,6 @@
 import React from "react";
 import logo from "../../assets/logop.jpg";
-export default function Navbar({onOpen}) {
+export default function NavbarAdmin({onOpen}) {
   return (
     <>
       <div className="navbar bg-base-100 shadow-sm">

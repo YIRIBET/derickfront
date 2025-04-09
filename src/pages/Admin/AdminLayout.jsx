@@ -1,7 +1,7 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
 import Sidebar from "../../Components/admin/Sidebar";
-import Navbar from "../../Components/admin/Navbar";
+import NavbarAdmin from "../../Components/admin/Navbar";
 import Dashboard from "./DashboardPage";
 
 const AdminLayout = () => {
@@ -13,7 +13,7 @@ const AdminLayout = () => {
       {/* Contenedor principal */}
       <div className="flex-1 flex flex-col">
         {/* Navbar */}
-        <Navbar />
+        <NavbarAdmin />
 
         {/* Contenido dinámico */}
         <main className="flex-1 p-6">
