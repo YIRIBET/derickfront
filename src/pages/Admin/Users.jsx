@@ -180,7 +180,7 @@ const Users = () => {
               Nuevo Admin
             </button>
             <button
-              className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white font-medium rounded-lg px-4 py-2.5 transition-colors duration-200"
+              className="flex items-center gap-2  bg-[#ff6227] hover:bg-[#ff4427]  text-white font-medium rounded-lg px-4 py-2.5 transition-colors duration-200"
               onClick={() => openCreateModal("RESTAURANT_OWNER")}
             >
               <svg
@@ -200,7 +200,7 @@ const Users = () => {
               Nuevo Restaurantero
             </button>
             <button
-              className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white font-medium rounded-lg px-4 py-2.5 transition-colors duration-200"
+              className="flex items-center gap-2  bg-[#ff6227] hover:bg-[#ff4427]  text-white font-medium rounded-lg px-4 py-2.5 transition-colors duration-200"
               onClick={() => openCreateModal("USER")}
             >
               <svg
