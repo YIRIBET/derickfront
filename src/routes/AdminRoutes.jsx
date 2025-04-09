@@ -35,6 +35,9 @@ const AdminRoutes = () => {
         <Route path="" element={<Dashboard />} />
         <Route path="users" element={<UsersPage />} />
         <Route path="users/new" element={<UserForm />} /> 
+        <Route path="users/edit/:id" element={<UserForm />} />
+
+        {/* Rutas para Roles */}
         <Route path="roles" element={<RolesPage roles={roles} setRoles={setRoles} />} />
         <Route path="roles/new" element={<RoleForm roles={roles} setRoles={setRoles} />} />
         <Route path="roles/edit/:id" element={<RoleForm roles={roles} setRoles={setRoles} />} />

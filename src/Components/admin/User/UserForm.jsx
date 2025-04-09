@@ -1,68 +1,101 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import DialogModal from "../DialogModal"; // Ajusta el path según tu estructura
 
-const UserForm = ({ onSubmit }) => {
-    const navigate = useNavigate();
-    const { id } = useParams();
-    const isEditing = id !== undefined;
-    
-    const [formData, setFormData] = useState({
-      name: "",
-      role: 2,
-      email: "",
-      password: "",
-      startDate: "",
-      status: true,
+const UserForm = () => {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const isEditing = id !== undefined;
+
+  const [formData, setFormData] = useState({
+    name: "",
+    role: 2,
+    email: "",
+    password: "",
+    startDate: "",
+    status: true,
+  });
+
+  const [modalInfo, setModalInfo] = useState({ show: false, title: "", message: "", variant: "success" });
+
+  useEffect(() => {
+    if (isEditing) {
+      fetch(`http://127.0.0.1:8000/users/api/${id}/`)
+        .then(res => res.json())
+        .then(data => setFormData(data))
+        .catch(() =>
+          setModalInfo({
+            show: true,
+            title: "Error",
+            message: "No se pudo cargar el usuario.",
+            variant: "error",
+          })
+        );
+    }
+  }, [id]);
+
+  useEffect(() => {
+    if (modalInfo.show) {
+      const modal = document.getElementById("dialog_user");
+      if (modal) modal.showModal();
+    }
+  }, [modalInfo.show]);
+
+  useEffect(() => {
+    if (!isEditing) {
+      const now = new Date();
+      const formattedDate = now.toISOString().slice(0, 16); // formato para datetime-local
+      setFormData((prevData) => ({
+        ...prevData,
+        startDate: formattedDate,
+      }));
+    }
+  }, [isEditing]);
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData({
+      ...formData,
+      [name]: type === "checkbox" ? checked : value,
     });
+  };
 
-    const initialState = { name: "", role: "", email: "" };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-    useEffect(() => {
-      if (isEditing) {
-        // Aquí podrías hacer un fetch al backend para traer los datos del usuario a editar
-      }
-    }, [id]);
-
-    const handleChange = (e) => {
-      const { name, value, type, checked } = e.target;
-      setFormData({
-        ...formData,
-        [name]: type === "checkbox" ? checked : value,
+    try {
+      const response = await fetch("http://127.0.0.1:8000/users/api/", {
+        method: isEditing ? "PUT" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
       });
-    };
-  
 
-
-    const handleSubmit = async (e) => {
-      e.preventDefault();
-  
-      if (!isEditing) {
-        try {
-          const response = await fetch("http://127.0.0.1:8000/users/api/", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(formData),
-          });
-  
-          if (!response.ok) {
-            throw new Error("Error al crear el usuario");
-          }
-  
-          alert("Usuario creado correctamente");
-          navigate("/admin/users");
-        } catch (error) {
-          console.error(error);
-          alert("Hubo un error al crear el usuario.");
-        }
-      } else {
-        //Logica para PUT Edicion
+      if (!response.ok) {
+        throw new Error("Error en la solicitud");
       }
-    };
+
+      setModalInfo({
+        show: true,
+        title: isEditing ? "Usuario actualizado" : "Usuario creado",
+        message: isEditing ? "El usuario ha sido actualizado correctamente." : "El usuario ha sido creado correctamente.",
+        variant: "success",
+      });
+
+    } catch (error) {
+      setModalInfo({
+        show: true,
+        title: "Error",
+        message: "Hubo un error al guardar el usuario.",
+        variant: "error",
+      });
+    }
+  };
 
   return (
-    <form onSubmit={handleSubmit} className="p-6 bg-base-100 rounded-lg shadow-md">
+    <>
+          <form onSubmit={handleSubmit} className="p-6 bg-base-100 rounded-lg shadow-md">
       <h2 className="text-xl font-bold mb-4">{isEditing ? "Editar Usuario" : "Nuevo Usuario"}</h2>
 
       {/* Nombre */}
@@ -174,16 +207,7 @@ const UserForm = ({ onSubmit }) => {
       </label>
       <p className="validator-hint hidden">Ingrese una contraseña válida.</p>
 
-      {/* Fecha de Inicio */}
-      <label className="input validator mb-4">
-        <input
-          type="datetime-local"
-          name="startDate"
-          required
-          value={formData.startDate}
-          onChange={handleChange}
-        />
-      </label>
+   
 
       {/* Estado */}
       <label className="flex items-center gap-2 mb-4">
@@ -197,10 +221,27 @@ const UserForm = ({ onSubmit }) => {
       </label>
 
       {/* Botón de Envío */}
-      <button className="btn btn-primary btn-wide" type="submit">
+      <button className="btn bg-orange-400 text-gray-50 btn-wide" type="submit">
           {isEditing ? "Guardar Cambios" : "Agregar Usuario"}
         </button>
     </form>
+
+    {modalInfo.show && (
+  <DialogModal
+    id="dialog_user"
+    title={modalInfo.title}
+    message={modalInfo.message}
+    variant={modalInfo.variant}
+    onClose={() => {
+      setModalInfo({ ...modalInfo, show: false });
+      if (modalInfo.variant === "success") navigate("/admin/users");
+    }}
+  />
+)}
+      <script>
+        {modalInfo.show && `document.getElementById('dialog_user')?.showModal()`}
+      </script>
+    </>
   );
 };
 

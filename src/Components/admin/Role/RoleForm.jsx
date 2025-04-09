@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import ModalDialog from "../DialogModal";
 
 const RoleForm = ({ roles, setRoles }) => {
   const navigate = useNavigate();
@@ -8,7 +9,7 @@ const RoleForm = ({ roles, setRoles }) => {
   
   const initialState = { name: "" };
   const [formData, setFormData] = useState(initialState);
-
+  const [errorMessage, setErrorMessage] = useState('');
   // Si es edición, cargar los datos del rol
   useEffect(() => {
     if (isEditing) {
@@ -50,10 +51,20 @@ const RoleForm = ({ roles, setRoles }) => {
           />
         </label>
 
-        <button className="btn btn-primary btn-wide" type="submit">
+        <button className="btn bg-orange-400 text-gray-50 btn-wide" type="submit">
           {isEditing ? "Guardar Cambios" : "Agregar Rol"}
         </button>
       </form>
+      {/* Modal de error */}
+      {errorMessage && (
+        <ModalDialog
+          id="error_modal"
+          title="Error"
+          message={errorMessage}
+          type="error"
+          showActions={false}
+        />
+      )}
     </div>
   );
 };

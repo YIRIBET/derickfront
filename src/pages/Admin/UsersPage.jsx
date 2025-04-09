@@ -11,11 +11,10 @@
 
   const UsersPage = () => {
     const [users, setUsers] = useState([]);
-    const [userToDelete, setUserToDelete] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
-      fetch("http://127.0.0.1:8000/users/api/")
+      fetch("http://localhost:8000/users/api/")
         .then((res) => {
           if (!res.ok) {
             throw new Error("No se pudo obtener la lista de usuarios");
@@ -38,18 +37,23 @@
         });
     }, []);
 
-
-    const openDeleteModal = (id) => {
-      setUserToDelete(id);
-      document.getElementById('delete_modal').showModal();
-    };
+    const handleDelete = async (id) => {
+      try {
+        const response = await fetch(`http://localhost:8000/users/api/${id}/`, {
+          method: "DELETE",
+        });
   
-    const confirmDelete = () => {
-      if (userToDelete !== null) {
-        setUsers(users.filter(user => user.id !== userToDelete));
-        setUserToDelete(null);
+        if (response.ok) {
+          // Eliminar el usuario de la lista localmente después de eliminarlo en el backend
+          setUsers(users.filter((user) => user.id !== id));
+        } else {
+          throw new Error("Error al eliminar el usuario");
+        }
+      } catch (error) {
+        console.error("Error al eliminar el usuario:", error.message);
       }
     };
+
   
 
     return (
@@ -58,27 +62,14 @@
 
         {/* Botón para agregar usuarios */}
         <button 
-          className="btn btn-primary btn-wide mb-4"
+          className="btn bg-orange-400 text-gray-50 btn-wide mb-4"
           onClick={() => navigate("new")}
         >
           Agregar Usuario
         </button>
 
-        <UsersList users={users} onDelete={openDeleteModal} />
+        <UsersList users={users} onDelete={handleDelete} />
 
-        {/* Modal de confirmación */}
-      <dialog id="delete_modal" className="modal">
-        <div className="modal-box">
-          <h3 className="font-bold text-lg">¿Eliminar usuario?</h3>
-          <p className="py-4">¿Estás seguro de que deseas eliminar este usuario?</p>
-          <div className="modal-action">
-            <form method="dialog" className="flex gap-2">
-              <button className="btn" onClick={() => setUserToDelete(null)}>Cancelar</button>
-              <button className="btn btn-error" onClick={confirmDelete}>Eliminar</button>
-            </form>
-          </div>
-        </div>
-      </dialog>
       </div>
     );
   };

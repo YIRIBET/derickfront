@@ -1,17 +1,35 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import ModalDialog from "../DialogModal";
+
 
 const RestaurantsList = ({ restaurants, onDelete }) => {
   const navigate = useNavigate();
+  const [restaurantToDelete, setRestaurantToDelete] = useState(null);
 
+  const openModal = (restaurant) => {
+    setRestaurantToDelete(restaurant);
+    document.getElementById("delete_restaurant_modal").showModal();
+  };
+
+  const handleConfirmDelete = () => {
+    if (restaurantToDelete) {
+      onDelete(restaurantToDelete.id);
+      setRestaurantToDelete(null);
+    }
+  };
   return (
+    <>
+    
     <div className="overflow-x-auto rounded-box border border-base-content/5 bg-base-100 p-4">
       <table className="table">
         <thead>
           <tr className="bg-base-200">
             <th>#</th>
             <th>Nombre</th>
-            <th>Ubicación</th>
+            <th>Dirección</th>
+            <th>Telefono</th>
+            <th>Descripción</th>
             <th>Acciones</th>
           </tr>
         </thead>
@@ -21,7 +39,9 @@ const RestaurantsList = ({ restaurants, onDelete }) => {
               <tr key={restaurant.id} className="hover">
                 <th>{index + 1}</th>
                 <td>{restaurant.name}</td>
-                <td>{restaurant.location}</td>
+                <td>{restaurant.address}</td>
+                <td>{restaurant.phone}</td>
+                <td>{restaurant.description}</td>
                 <td>
                   {/* Botón Editar */}
                   <button
@@ -34,7 +54,7 @@ const RestaurantsList = ({ restaurants, onDelete }) => {
                   {/* Botón Eliminar */}
                   <button
                     className="btn btn-sm btn-outline btn-error"
-                    onClick={() => onDelete(restaurant.id)}
+                    onClick={() => openModal(restaurant)}
                   >
                     Eliminar
                   </button>
@@ -50,7 +70,18 @@ const RestaurantsList = ({ restaurants, onDelete }) => {
           )}
         </tbody>
       </table>
+       {/* Modal de confirmación de eliminación */}
+      <ModalDialog
+        id="delete_restaurant_modal"
+        title="¿Eliminar Restaurante?"
+        message={`¿Estás seguro de que deseas eliminar a ${restaurantToDelete?.name}?`}
+        type="warning"
+        showActions={true}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setRestaurantToDelete(null)}
+      />
     </div>
+    </>
   );
 };
 
