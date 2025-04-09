@@ -15,7 +15,7 @@ const Menu = () => {
 
   // Hardcodeado para pruebas
   const getAuthToken = () => {
-    return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQzNzMyMTE1LCJpYXQiOjE3NDM3MzE4MTUsImp0aSI6ImM3YWI5OWY2NTNlODRkMjI4NzMwZDgzMTI0MmY5MTMxIiwidXNlcl9pZCI6MywiZW1haWwiOiJpbGNlQGdtYWlsLmNvbSIsInJvbGUiOiJVU0VSIn0.HORUYhRQQT0OiGeV12mSnYHqpUjkZyjuq4L_x82-H8Y"; // Token hardcodeado
+    return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ0NTc4NTQzLCJpYXQiOjE3NDM5NzM3NDMsImp0aSI6IjJkMTViYTljOThhYTQzM2U5MjViOTk5YmMzNTA5YzJlIiwidXNlcl9pZCI6MywiZW1haWwiOiJpbGNlQGdtYWlsLmNvbSIsInJvbGUiOiJVU0VSIn0.AxH6QoQr7NZEAL_WYvT12qSEnqhnTwwF26WSGLk_K_c"; // Token hardcodeado
   };
 
   // Fetch menus from API
@@ -214,7 +214,7 @@ const Menu = () => {
                             viewBox="0 0 24 24"
                             stroke-width="1.5"
                             stroke="currentColor"
-                            class="size-6"
+                            className="size-6"
                           >
                             <path
                               stroke-linecap="round"
@@ -233,13 +233,12 @@ const Menu = () => {
                             viewBox="0 0 24 24"
                             stroke-width="1.5"
                             stroke="currentColor"
-                            class="size-6"
+                            className="size-6"
                           >
                             <path
                               stroke-linecap="round"
                               stroke-linejoin="round"
-                              d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
-                            />
+                              d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0=" />
                           </svg>
                         </button>
                       </td>
@@ -250,106 +249,6 @@ const Menu = () => {
             )}
           </div>
         </div>
-
-        {/* Modal de menú */}
-        {isModalOpen && (
-          <div
-            id="default-modal"
-            tabIndex="-1"
-            aria-hidden={!isModalOpen}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm"
-            onClick={closeModal}
-          >
-            <div
-              className="relative p-4 w-full max-w-2xl max-h-full"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <form onSubmit={handleSubmit}>
-                <div className="relative bg-white rounded-lg shadow dark:bg-gray-700">
-                  <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600">
-                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                      {selectedMenu ? "Editar menú" : "Agregar nuevo menú"}
-                    </h3>
-                    <button
-                      type="button"
-                      className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
-                      onClick={closeModal}
-                    >
-                      <svg
-                        className="w-3 h-3"
-                        aria-hidden="true"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 17 17"
-                      >
-                        <path
-                          stroke="currentColor"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M14 14L3 3M3 14L14 3"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                  <div className="p-6 space-y-6">
-                    <div>
-                      <label
-                        htmlFor="name"
-                        className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                      >
-                        Nombre
-                      </label>
-                      <input
-                        type="text"
-                        id="name"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleInputChange}
-                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                        placeholder="Nombre del menú"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="description"
-                        className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                      >
-                        Descripción
-                      </label>
-                      <textarea
-                        id="description"
-                        name="description"
-                        value={formData.description}
-                        onChange={handleInputChange}
-                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                        placeholder="Descripción del menú"
-                        rows="4"
-                        required
-                      />
-                    </div>
-                    <div className="flex justify-between">
-                      <button
-                        type="button"
-                        onClick={closeModal}
-                        className="text-white bg-red-500 hover:bg-red-600 focus:ring-4 focus:outline-none focus:ring-red-200 dark:focus:ring-red-700 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
-                      >
-                        Cancelar
-                      </button>
-                      <button
-                        type="submit"
-                        className="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
-                      >
-                        Guardar
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
       </div>
     </>
   );

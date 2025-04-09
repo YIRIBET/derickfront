@@ -7,7 +7,6 @@ import AuthContext from '../../config/context/auth-context';
 import AxiosClient from "../../config/http-client/axios-client";
 
 const Home = () => {
-
   const [restaurants, setRestaurants] = useState([]);
   const [newRestaurants, setNewRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,8 +20,8 @@ const Home = () => {
 
   const isUserSignedIn = user?.signed || false;
   const navigate = useNavigate();
+
   useEffect(() => {
-    // Obtén el token desde localStorage
     const storedUser = JSON.parse(localStorage.getItem("user"));
   
     if (!storedUser || !storedUser.access) {
@@ -31,15 +30,13 @@ const Home = () => {
       return;
     }
   
-    setLoading(true); // Inicia la carga antes de hacer la solicitud
+    setLoading(true);
   
-    // Realiza la solicitud con Axios
     AxiosClient({
-      url: "restaurante/api/", // La URL que necesitas
+      url: "restaurante/api/",
       method: 'GET',
     })
     .then((response) => {
-      // Axios maneja automáticamente el .data, así que no necesitas hacer .json() ni .text()
       console.log("Datos recibidos:", response.data);
   
       if (Array.isArray(response.data)) {
@@ -53,15 +50,12 @@ const Home = () => {
       setError("Error al obtener los restaurantes: " + err.message);
     })
     .finally(() => {
-      setLoading(false); // Siempre se ejecuta después de la solicitud
+      setLoading(false);
     });
   }, []);
-  
-
-
 
   return (
-    <div className={`${!isUserSignedIn ? 'mt-[140px]' : ''} relative min-h-screen`} >
+    <div className={`${!isUserSignedIn ? 'mt-[140px]' : ''} relative min-h-screen`}>
       <Navbar onCartClick={() => setShowCart(!showCart)} />
       <div className="flex min-h-screen flex-col w-full start-0">
         <h1 className="text-4xl font-bold text-center">
@@ -76,36 +70,50 @@ const Home = () => {
           <p className="text-2xl font-bold text-start mb-6">
             Restaurantes populares
           </p>
-          <div className="grid grid-cols-1 gap-4 overflow-x-auto xl:grid-cols-4">
-            {restaurants.map((restaurant) => (
-              <div key={restaurant.id} className="p-4 rounded-xl">
-                <div className="aspect-[4/3] overflow-hidden rounded-xl relative z-10">
-                  <img
-                    onClick={() => navigate(`/menu/${restaurant.id}`)}
-                    src={restaurant.logo}
-                    alt={`${restaurant.name} imagen`}
-                    className="w-full h-full object-cover transition-transform hover:scale-105 cursor-pointer"
-                  />
-                </div>
-
-                <div className="mt-4 flex justify-between">
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-700">
-                      <a href={`/menu/${restaurant.id}`} className="relative">
-                        {restaurant.name}
-                      </a>
-                    </h3>
-                    <p className="mt-1 text-sm text-gray-500">
-                      {restaurant.description}
-                    </p>
-                  </div>
-                  <p className="text-sm font-medium text-gray-900">
-                    {restaurant.address}
-                  </p>
-                </div>
-              </div>
-            ))}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
+  {restaurants.map((restaurant) => (
+    <div 
+      key={restaurant.id} 
+      className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow duration-300"
+      onClick={() => navigate(`/menu/${restaurant.id}`)}
+    >
+      {/* Imagen del restaurante */}
+      <div className="h-40 overflow-hidden">
+        {restaurant.restaurant_image ? (
+          <img
+            src={`data:${restaurant.restaurant_image.type};base64,${restaurant.restaurant_image.data}`}
+            alt={restaurant.name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+            <p className="text-gray-500">No hay imagen disponible</p>
           </div>
+        )}
+      </div>
+      
+      {/* Información del restaurante */}
+      <div className="p-4">
+        <h3 className="font-bold text-lg mb-1 truncate">{restaurant.name}</h3>
+        <div className="flex items-center mb-2">
+          <span className="text-yellow-500">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <span key={i}>
+                {i < Math.floor(restaurant.rating || 0) ? '★' : '☆'}
+              </span>
+            ))}
+          </span>
+          <span className="text-gray-600 text-sm ml-1">
+            ({restaurant.rating?.toFixed(1) || '0.0'})
+          </span>
+        </div>
+        <p className="text-gray-600 text-sm truncate">
+          {restaurant.address || 'Dirección no disponible'}
+        </p>
+      </div>
+    </div>
+  ))}
+</div>
         </div>
 
         {/* Restaurantes Nuevos */}
@@ -245,9 +253,7 @@ const Home = () => {
                     ¿Ya tienes una cuenta?{" "}
                     <Link to={"/login"}>
                       Inicia sesión
-
                     </Link>
-
                   </div>
                 </form>
               </div>
@@ -256,7 +262,6 @@ const Home = () => {
         </section>
       </div>
 
-      {/* Condicionalmente mostrar el carrito */}
       {showCart && <Cart />}
     </div>
   );

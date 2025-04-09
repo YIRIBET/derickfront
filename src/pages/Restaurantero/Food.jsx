@@ -12,25 +12,24 @@ const Food = () => {
     description: "",
     price: "",
     image: "",
-    start_date: new Date().toISOString(),
+    start_date: new Date().toISOString()
   });
 
+  // Hardcodeado para pruebas
   const getAuthToken = () => {
-    return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQzNzMyMTE1LCJpYXQiOjE3NDM3MzE4MTUsImp0aSI6ImM3YWI5OWY2NTNlODRkMjI4NzMwZDgzMTI0MmY5MTMxIiwidXNlcl9pZCI6MywiZW1haWwiOiJpbGNlQGdtYWlsLmNvbSIsInJvbGUiOiJVU0VSIn0.HORUYhRQQT0OiGeV12mSnYHqpUjkZyjuq4L_x82-H8Y";
+    return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ0NjAzNjA0LCJpYXQiOjE3NDM5OTg4MDQsImp0aSI6ImFlYjYyNzViZTFkNDQyODJhNDMwZDhhY2Q0OGI1YmJhIiwidXNlcl9pZCI6MywiZW1haWwiOiJpbGNlQGdtYWlsLmNvbSIsInJvbGUiOiJVU0VSIn0.nvd3IN5qmZnzqn8HACB-vy_QStQeroJd9d39di5PSho"; // Token hardcodeado
   };
 
+  // Fetch foods from API
   useEffect(() => {
     const fetchFoods = async () => {
       try {
-        const token = getAuthToken();
         const response = await fetch(API_URL, {
-          method: "GET",
           headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+            'Authorization': `Bearer ${getAuthToken()}`, // Agregar token aquí
           },
         });
-        if (!response.ok) throw new Error("Network response was not ok");
+        if (!response.ok) throw new Error('Network response was not ok');
         const data = await response.json();
         setFoods(data);
         setIsLoading(false);
@@ -51,7 +50,7 @@ const Food = () => {
         description: food.description,
         price: food.price,
         image: food.image,
-        start_date: food.start_date,
+        start_date: food.start_date
       });
     } else {
       setSelectedFood(null);
@@ -61,7 +60,7 @@ const Food = () => {
         description: "",
         price: "",
         image: "",
-        start_date: new Date().toISOString(),
+        start_date: new Date().toISOString()
       });
     }
     setIsModalOpen(true);
@@ -74,9 +73,9 @@ const Food = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
-      [name]: value,
+      [name]: value
     }));
   };
 
@@ -84,23 +83,30 @@ const Food = () => {
     e.preventDefault();
     try {
       const url = selectedFood ? `${API_URL}${selectedFood.id}/` : API_URL;
-      const method = selectedFood ? "PUT" : "POST";
-      const token = getAuthToken();
+      const method = selectedFood ? 'PUT' : 'POST';
+
+      // Usamos FormData si vamos a trabajar con imágenes
+      const form = new FormData();
+      form.append('name', formData.name);
+      form.append('description', formData.description);
+      form.append('price', formData.price);
+      form.append('menu', formData.menu);
+      form.append('image', formData.image); // Si es una imagen, usa FormData
+      form.append('start_date', formData.start_date);
 
       const response = await fetch(url, {
         method: method,
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          'Authorization': `Bearer ${getAuthToken()}`, // Token en los headers
         },
-        body: JSON.stringify(formData),
+        body: form,
       });
 
-      if (!response.ok) throw new Error("Network response was not ok");
+      if (!response.ok) throw new Error('Network response was not ok');
 
       const updatedResponse = await fetch(API_URL, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          'Authorization': `Bearer ${getAuthToken()}`, // Token para la actualización
         },
       });
       const updatedData = await updatedResponse.json();
@@ -114,25 +120,24 @@ const Food = () => {
   const handleDelete = async (id) => {
     if (window.confirm("¿Estás seguro de que quieres eliminar esta comida?")) {
       try {
-        const token = getAuthToken();
         const response = await fetch(`${API_URL}${id}/`, {
-          method: "DELETE",
+          method: 'DELETE',
           headers: {
-            Authorization: `Bearer ${token}`,
+            'Authorization': `Bearer ${getAuthToken()}`, // Token para la eliminación
           },
         });
 
-        if (!response.ok) throw new Error("Network response was not ok");
+        if (!response.ok) throw new Error('Network response was not ok');
 
-        setFoods(foods.filter((food) => food.id !== id));
+        setFoods(foods.filter(food => food.id !== id));
       } catch (error) {
         console.error("Error deleting food:", error);
       }
     }
   };
+
   return (
     <>
-    
       <div className="p-4 sm:ml-64 mt-9">
         <div className="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700">
           <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
@@ -189,13 +194,17 @@ const Food = () => {
                       <td className="px-6 py-4">{food.description}</td>
                       <td className="px-6 py-4">${food.price}</td>
                       <td className="px-6 py-4">
-                        {food.image && (
-                          <img 
-                            src={food.image} 
-                            alt={food.name} 
-                            className="w-16 h-16 object-cover rounded"
-                          />
-                        )}
+                      {food.image ? (
+                <img
+                  src={`data:${food.image.type};base64,${food.image.data}`}
+                  alt={food.name}
+                  className="w-20 h-15 object-cover"
+                />
+              ) : (
+                <div className="w-full h-48 flex items-center justify-center bg-gray-200 text-gray-500">
+                  Sin imagen
+                </div>
+              )}
                       </td>
                       <td className="px-6 py-4">
                         {new Date(food.start_date).toLocaleDateString()}
@@ -204,36 +213,37 @@ const Food = () => {
                         <button 
                           onClick={() => openModal(food)}
                           className="font-medium text-blue-600 dark:text-blue-500 hover:underline mr-3"
-                        ><svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke-width="1.5"
-                        stroke="currentColor"
-                        class="size-6"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
-                        />
-                      </svg>
+                        >
+                           <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth="1.5"
+                            stroke="currentColor"
+                            className="size-6"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
+                            />
+                          </svg>
                         </button>
                         <button 
                           onClick={() => handleDelete(food.id)}
                           className="font-medium text-red-600 dark:text-red-500 hover:underline"
                         >
-                         <svg
+                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             fill="none"
                             viewBox="0 0 24 24"
-                            stroke-width="1.5"
+                            strokeWidth="1.5"
                             stroke="currentColor"
-                            class="size-6"
+                            className="size-6"
                           >
                             <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
                               d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
                             />
                           </svg>
@@ -246,151 +256,89 @@ const Food = () => {
             )}
           </div>
         </div>
-
-        {/* Modal de comida */}
-        {isModalOpen && (
-          <div
-            id="default-modal"
-            tabIndex="-1"
-            aria-hidden={!isModalOpen}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm"
-            onClick={closeModal}
-          >
-            <div
-              className="relative p-4 w-full max-w-2xl max-h-full"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <form onSubmit={handleSubmit}>
-                <div className="relative bg-white h-full rounded-lg shadow dark:bg-gray-700">
-                  <div className="flex items-center justify-between p-3 md:p-5 border-b rounded-t dark:border-gray-600">
-                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                      {selectedFood ? "Editar comida" : "Agregar nueva comida"}
-                    </h3>
-                    <button
-                      type="button"
-                      className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
-                      onClick={closeModal}
-                    >
-                      <svg
-                        className="w-3 h-3"
-                        aria-hidden="true"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 14 14"
-                      >
-                        <path
-                          stroke="currentColor"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-
-                  <div className="p-4 md:p-5 space-y-4">
-                    <div className="grid grid-cols-1 gap-4 mb-4">
-                      <div>
-                        <input 
-                          type="text" 
-                          id="name"
-                          name="name"
-                          value={formData.name}
-                          onChange={handleInputChange}
-                          className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white" 
-                          required
-                          placeholder="Nombre del platillo"
-                        />
-                      </div>
-                      <div>
-                   
-                        <textarea 
-                          id="description"
-                          name="description"
-                          value={formData.description}
-                          onChange={handleInputChange}
-                          rows="3"
-                          className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white" 
-                          required
-                          placeholder="Descripción del platillo"
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label htmlFor="price" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Precio</label>
-                          <input 
-                            type="number" 
-                            id="price"
-                            name="price"
-                            value={formData.price}
-                            onChange={handleInputChange}
-                            step="0.01"
-                            min="0"
-                            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white" 
-                            required
-                          />
-                        </div>
-                        <div>
-                          <label htmlFor="menu" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Menú</label>
-                          <input 
-                            type="number" 
-                            id="menu"
-                            name="menu"
-                            value={formData.menu}
-                            onChange={handleInputChange}
-                            min="1"
-                            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white" 
-                            required
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <input 
-                          type="url" 
-                          id="image"
-                          name="image"
-                          value={formData.image}
-                          onChange={handleInputChange}
-                          className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white" 
-                          placeholder="URL de la imagen"
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="start_date" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Fecha de inicio</label>
-                        <input 
-                          type="datetime-local" 
-                          id="start_date"
-                          name="start_date"
-                          value={formData.start_date.substring(0, 16)}
-                          onChange={handleInputChange}
-                          className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white" 
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-end p-4 md:p-5 border-t border-gray-200 rounded-b dark:border-gray-600">
-                    <button
-                      type="button"
-                      className="text-gray-500 bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 focus:z-10 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-600 mr-2"
-                      onClick={closeModal}
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      type="submit"
-                      className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                    >
-                      {selectedFood ? "Actualizar" : "Agregar"}
-                    </button>
-                  </div>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* Modal for adding/editing food */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+            <h2 className="text-2xl font-semibold mb-4">{selectedFood ? "Editar Comida" : "Agregar Comida"}</h2>
+            <form onSubmit={handleSubmit}>
+              <div className="mb-4">
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700">Nombre</label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  className="mt-1 block w-full px-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700">Descripción</label>
+                <textarea
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  className="mt-1 block w-full px-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label htmlFor="price" className="block text-sm font-medium text-gray-700">Precio</label>
+                <input
+                  type="number"
+                  id="price"
+                  name="price"
+                  value={formData.price}
+                  onChange={handleInputChange}
+                  className="mt-1 block w-full px-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label htmlFor="image" className="block text-sm font-medium text-gray-700">Imagen</label>
+                <input
+                  type="file"
+                  id="image"
+                  name="image"
+                  onChange={handleInputChange}
+                  className="mt-1 block w-full px-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div className="mb-4">
+                <label htmlFor="start_date" className="block text-sm font-medium text-gray-700">Fecha de Inicio</label>
+                <input
+                  type="date"
+                  id="start_date"
+                  name="start_date"
+                  value={formData.start_date}
+                  onChange={handleInputChange}
+                  className="mt-1 block w-full px-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div className="flex justify-end space-x-4">
+                <button 
+                  type="button" 
+                  onClick={closeModal} 
+                  className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit" 
+                  className="bg-black text-white px-4 py-2 rounded-lg"
+                >
+                  {selectedFood ? "Actualizar" : "Agregar"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </>
   );
 };

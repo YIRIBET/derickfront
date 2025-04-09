@@ -122,7 +122,7 @@ const Login = () => {
 
             <div className="flex items-center justify-center">
               <div className="text-sm">
-                <a href="#" className="font-medium text-primary hover:text-primary/90">
+                <a href="/request-password" className="font-medium text-primary hover:text-primary/90">
                   ¿Olvidaste tu contraseña?
                 </a>
               </div>
