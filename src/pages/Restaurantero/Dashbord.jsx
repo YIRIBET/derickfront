@@ -1,17 +1,68 @@
 import React from "react";
 import Pythones from "../../assets/PythonEsLogo.png";
 import { useNavigate } from "react-router-dom";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  BarElement,
+} from "chart.js";
+import { Line, Bar } from "react-chartjs-2";
+
+// Registrar los componentes necesarios de Chart.js
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const barChartData = {
+    labels: [
+      "Producto 1",
+      "Producto 2",
+      "Producto 3",
+      "Producto 4",
+      "Producto 5",
+    ],
+    datasets: [
+      {
+        label: "Ventas mensuales",
+        data: [120, 190, 90, 80, 70],
+        backgroundColor: [
+          "rgba(255, 99, 132, 0.2)",
+          "rgba(54, 162, 235, 0.2)",
+          "rgba(255, 206, 86, 0.2)",
+          "rgba(75, 192, 192, 0.2)",
+          "rgba(153, 102, 255, 0.2)",
+        ],
+        borderColor: [
+          "rgba(255, 99, 132, 1)",
+          "rgba(54, 162, 235, 1)",
+          "rgba(255, 206, 86, 1)",
+          "rgba(75, 192, 192, 1)",
+          "rgba(153, 102, 255, 1)",
+        ],
+        borderWidth: 1,
+      },
+    ],
+  };
+
   return (
     <>
-  
-
-      
-      {/*Contenido */}
-      <div class="p-4 sm:ml-64 mt-9">
-        <div class="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700">
+      <div className="p-4 sm:ml-64 mt-[-40px] ">
+        <div class="p-4 border-2 border-gray-200 rounded-lg dark:border-gray-700">
           <div class="grid grid-cols-3 gap-4 mb-4 w-full">
             <div class="flex items-center justify-center h-24 rounded-sm bg-gray-50 dark:bg-gray-800">
               <p class="text-2xl text-gray-400 dark:text-gray-500">
@@ -57,7 +108,7 @@ const Dashboard = () => {
               Filtrar por fecha
             </div>
           </div>
-          
+
           <div class="grid grid-cols-2 gap-4 mb-4">
             <div class=" items-center  rounded-sm  h-28 dark:border-gray-600 border-1 border-gray-200 ">
               <p className="font-semibold mt-5">Ventas hoy</p>
@@ -103,9 +154,10 @@ const Dashboard = () => {
             </div>
 
             <div class="flex items-center justify-center h-64 bg-white dark:bg-gray-700 rounded">
-              <p class="text-gray-400 dark:text-gray-500">
-                [Área para gráfica de ventas]
-              </p>
+            <div className="w-full h-75 bg-white dark:bg-gray-700 rounded p-6">
+                <Bar data={barChartData} options={{ responsive: true, maintainAspectRatio: false }}
+              />
+              </div>
             </div>
           </div>
           <div class="grid grid-cols-2 gap-8">

@@ -1,23 +1,62 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
 const Profile = () => {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const userId = localStorage.getItem('userId');
+        const accessToken = localStorage.getItem('accessToken');
+        
+        const response = await axios.get(`/api/users/${userId}`, {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
+        });
+        
+        setUser(response.data);
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
+  if (loading) {
+    return <div>Cargando perfil...</div>;
+  }
+
+  if (!user) {
+    return <div>No se pudo cargar la información del usuario</div>;
+  }
+
   return (
     <div className="grid grid-cols-12 gap-2 p-4 bg-gray-100 w-full">
       <div className="col-span-3 row-span-2 p-4 text-white">
         <div className="relative bg-white h-full rounded-lg shadow-sm dark:bg-gray-700 overflow-hidden transition-all duration-300 hover:shadow-lg dark:hover:shadow-gray-600/50">
-          {/* Header con avatar y nombre */}
+          {/* Sección del perfil */}
           <div className="flex flex-col sm:flex-row items-center justify-between p-6 bg-orange-500 dark:from-gray-800 dark:to-gray-900">
             <div className="flex items-center space-x-4">
               <img
                 className="rounded-full h-16 w-16 ring-4 ring-white/50 dark:ring-gray-600/50 object-cover transition-transform duration-300 hover:scale-105"
-                src="https://newprofilepic.photo-cdn.net//assets/images/article/profile.jpg?90af0c8"
+                src={user.avatar || "https://newprofilepic.photo-cdn.net//assets/images/article/profile.jpg?90af0c8"}
                 alt="Avatar del usuario"
               />
               <div>
                 <p className="text-sm text-white/80">Mi perfil</p>
                 <h5 className="text-xl font-bold text-white">
-                  Nombre de usuario
+                  {user.name}
                 </h5>
+                <p className="text-xs text-white/80">{user.email}</p>
+                <p className="text-xs text-white/80 mt-1 px-2 py-1 bg-orange-600 rounded-full">
+                  {user.role === 'RESTAURANT_OWNER' ? 'Dueño de Restaurante' : 'Cliente'}
+                </p>
               </div>
             </div>
           </div>
@@ -91,42 +130,50 @@ const Profile = () => {
               <span className="font-medium">Cerrar sesión</span>
             </button>
           </div>
+        
         </div>
       </div>
-      <div className="col-span-9 flex p-5 justify-center ">
-        <div class="relative bg-white w-full max-w-4xl rounded-lg shadow-sm dark:bg-gray-700 mt-5">
-          <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600 border-gray-200">
-            <h5 class="text-[30px] font-bold text-gray-900 dark:text-white">
+
+      {/* Sección de pedidos */}
+      <div className="col-span-9 flex p-5 justify-center">
+        <div className="relative bg-white w-full max-w-4xl rounded-lg shadow-sm dark:bg-gray-700 mt-5">
+          <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600 border-gray-200">
+            <h5 className="text-[30px] font-bold text-gray-900 dark:text-white">
               Mis últimos pedidos!
             </h5>
           </div>
 
-          <div class="flex justify-center p-4">
-            <a
-              href="#"
-              class="flex flex-col bg-white border border-gray-200 rounded-lg shadow-sm md:flex-row w-full max-w-2xl hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
-            >
-              <img
-                className="object-cover w-60 rounded-t-lg md:h-auto md:rounded-none md:rounded-s-lg"
-                src="https://cloudfront-us-east-1.images.arcpublishing.com/infobae/24P2OKC3RVEHRD3F2VKQ76XX7M.jpg"
-                alt=""
-              />
-              <div class="flex flex-col justify-between p-4 leading-normal">
-                <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-                  Nombre del restaurante
-                </h5>
-                <p class="mb-3 font-normal text-start text-gray-700 dark:text-gray-400">
-                  Fecha
-                </p>
-                <p class="mb-3 font-normal text-gray-700 dark:text-gray-400">
-                  cantidad
-                </p>
-                <p class="mb-3 font-bold text-xl text-[#ff6227] ">
-                  Total
-                </p>
+          {user.orders && user.orders.length > 0 ? (
+            user.orders.map((order, index) => (
+              <div key={index} className="flex justify-center p-4">
+                <div className="flex flex-col bg-white border border-gray-200 rounded-lg shadow-sm md:flex-row w-full max-w-2xl hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
+                  <img
+                    className="object-cover w-60 rounded-t-lg md:h-auto md:rounded-none md:rounded-s-lg"
+                    src={order.image}
+                    alt={order.restaurant}
+                  />
+                  <div className="flex flex-col justify-between p-4 leading-normal">
+                    <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+                      {order.restaurant}
+                    </h5>
+                    <p className="mb-3 font-normal text-start text-gray-700 dark:text-gray-400">
+                      Fecha: {new Date(order.date).toLocaleDateString()}
+                    </p>
+                    <p className="mb-3 font-normal text-gray-700 dark:text-gray-400">
+                      {order.items} {order.items === 1 ? "ítem" : "ítems"}
+                    </p>
+                    <p className="mb-3 font-bold text-xl text-[#ff6227]">
+                      Total: ${order.total.toFixed(2)}
+                    </p>
+                  </div>
+                </div>
               </div>
-            </a>
-          </div>
+            ))
+          ) : (
+            <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+              No tienes pedidos recientes
+            </div>
+          )}
         </div>
       </div>
     </div>

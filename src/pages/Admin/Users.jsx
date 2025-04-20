@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import RoleBadge from "./Role"
-
-// Token fijo de autenticación (REEMPLAZA ESTO CON TU TOKEN REAL)
-const FIXED_TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ0ODIzMzQzLCJpYXQiOjE3NDQyMTg1NDMsImp0aSI6IjNkNDIzOTFlY2M4MjQyZjhiNjQyNTcwNzVmNTNhM2JkIiwidXNlcl9pZCI6MiwiZW1haWwiOiJhZG1pbkBjb3JyZW8uY29tIiwicm9sZSI6IkFETUlOIn0.GKgEPig34_tlsWK83mgeE1-V7pFbtTThN-8O6ZPL8bE";
+import Swal from 'sweetalert2';
+import RoleBadge from "./Role";
+import AuthContext from '../../config/context/auth-context';
+import AxiosClient from "../../config/http-client/axios-client";
 
 // Esquema de validación con Yup
 const userSchema = Yup.object().shape({
@@ -25,7 +25,46 @@ const Users = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [userType, setUserType] = useState("USER"); // 'ADMIN', 'RESTAURANT_OWNER', 'USER'
+  const [userType, setUserType] = useState("USER");
+  const { user } = useContext(AuthContext);
+  const isUserSignedIn = user?.signed || false;
+
+  // Mostrar alerta de éxito
+  const showSuccessAlert = (title, message) => {
+    Swal.fire({
+      title: title,
+      text: message,
+      icon: 'success',
+      confirmButtonColor: '#3085d6',
+      confirmButtonText: 'Aceptar'
+    });
+  };
+
+  // Mostrar alerta de error
+  const showErrorAlert = (title, message) => {
+    Swal.fire({
+      title: title,
+      text: message,
+      icon: 'error',
+      confirmButtonColor: '#d33',
+      confirmButtonText: 'Aceptar'
+    });
+  };
+
+  // Mostrar diálogo de confirmación
+  const showConfirmDialog = async (title, text) => {
+    const result = await Swal.fire({
+      title: title,
+      text: text,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Sí, continuar',
+      cancelButtonText: 'Cancelar'
+    });
+    return result.isConfirmed;
+  };
 
   // Datos iniciales del formulario
   const initialValues = {
@@ -36,47 +75,30 @@ const Users = () => {
     isCreating: true,
   };
 
-  // Función para llamadas API con el token fijo
-  const apiRequest = async (url, method = "GET", body = null) => {
-    const headers = {
-      "Authorization": FIXED_TOKEN,
-      "Content-Type": "application/json",
-    };
-
-    const response = await fetch(url, {
-      method,
-      headers,
-      body: body ? JSON.stringify(body) : null,
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.detail || "Error en la solicitud");
-    }
-
-    return await response.json();
-  };
-
   // Configuración de Formik
   const formik = useFormik({
     initialValues,
     validationSchema: userSchema,
     onSubmit: async (values, { setSubmitting }) => {
       setIsLoading(true);
+      
+      if (!isUserSignedIn) {
+        showErrorAlert("Error", "Debe iniciar sesión para realizar esta acción");
+        setIsLoading(false);
+        return;
+      }
+
       try {
         let endpoint = "";
         
         // Determinar el endpoint según el tipo de usuario
         switch(userType) {
           case "ADMIN":
-            endpoint = "http://127.0.0.1:8000/users/api/admin/save/";
+            endpoint = "users/api/admin/save/";
             break;
           case "RESTAURANT_OWNER":
-            endpoint = "http://127.0.0.1:8000/users/api/restaurant_owner/save/";
+            endpoint = "users/api/restaurant_owner/save/";
             break;
-          case "USER":
-          default:
-            endpoint = "http://127.0.0.1:8000/users/api/user/save/";
         }
 
         const data = {
@@ -85,13 +107,25 @@ const Users = () => {
           password: values.password,
         };
 
-        await apiRequest(endpoint, "POST", data);
-        alert(`¡Usuario ${userType.toLowerCase()} creado con éxito!`);
+        await AxiosClient({
+          url: endpoint,
+          method: "POST",
+          data,
+        });
+
+        showSuccessAlert(
+          `¡Usuario ${userType.toLowerCase()} creado!`,
+          `El usuario ${userType === "ADMIN" ? "administrador" : userType === "RESTAURANT_OWNER" ? "restaurantero" : "común"} ha sido registrado exitosamente`
+        );
+        
         fetchUsers();
         closeModal();
       } catch (error) {
         console.error("Error:", error);
-        alert(error.message || "Error al procesar la solicitud");
+        showErrorAlert(
+          "Error al procesar la solicitud",
+          error.response?.data?.message || "Ocurrió un error inesperado"
+        );
       } finally {
         setSubmitting(false);
         setIsLoading(false);
@@ -103,10 +137,22 @@ const Users = () => {
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      const data = await apiRequest("http://127.0.0.1:8000/users/api/");
-      setUsers(data);
+      const response = await AxiosClient({
+        url: "users/api/",
+        method: 'GET',
+      });
+      
+      if (Array.isArray(response.data)) {
+        setUsers(response.data);
+      } else {
+        throw new Error("Formato de datos inesperado");
+      }
     } catch (error) {
       console.error("Error fetching users:", error);
+      showErrorAlert(
+        "Error al cargar usuarios",
+        "No se pudieron obtener los datos de los usuarios"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -114,22 +160,43 @@ const Users = () => {
 
   // Eliminar usuario
   const handleDelete = async (id) => {
-    if (window.confirm("¿Estás seguro de eliminar este usuario?")) {
-      try {
-        await apiRequest(
-          `http://127.0.0.1:8000/users/api/${id}/`,
-          "DELETE"
-        );
-        alert("Usuario eliminado");
-        fetchUsers();
-      } catch (error) {
-        console.error("Error deleting user:", error);
-      }
+    const confirmed = await showConfirmDialog(
+      "¿Eliminar usuario?",
+      "Esta acción no se puede deshacer"
+    );
+    
+    if (!confirmed) return;
+
+    setIsLoading(true);
+    try {
+      await AxiosClient({
+        url: `users/api/${id}/`,
+        method: 'DELETE',
+      });
+      
+      showSuccessAlert(
+        "Usuario eliminado",
+        "El usuario ha sido eliminado del sistema"
+      );
+      fetchUsers();
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      showErrorAlert(
+        "Error al eliminar",
+        error.response?.data?.message || "No se pudo eliminar el usuario"
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // Abrir modal para crear
   const openCreateModal = (type) => {
+    if (!isUserSignedIn) {
+      showErrorAlert("Error", "Debe iniciar sesión para crear usuarios");
+      return;
+    }
+
     setUserType(type);
     formik.resetForm();
     setCurrentUser(null);
@@ -143,8 +210,6 @@ const Users = () => {
     formik.resetForm();
   };
 
-  // Datos para gráficos
- 
   // Cargar usuarios al montar el componente
   useEffect(() => {
     fetchUsers();
@@ -162,6 +227,7 @@ const Users = () => {
             <button
               className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white font-medium rounded-lg px-4 py-2.5 transition-colors duration-200"
               onClick={() => openCreateModal("ADMIN")}
+              disabled={isLoading}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -182,6 +248,7 @@ const Users = () => {
             <button
               className="flex items-center gap-2  bg-[#ff6227] hover:bg-[#ff4427]  text-white font-medium rounded-lg px-4 py-2.5 transition-colors duration-200"
               onClick={() => openCreateModal("RESTAURANT_OWNER")}
+              disabled={isLoading}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -199,26 +266,7 @@ const Users = () => {
               </svg>
               Nuevo Restaurantero
             </button>
-            <button
-              className="flex items-center gap-2  bg-[#ff6227] hover:bg-[#ff4427]  text-white font-medium rounded-lg px-4 py-2.5 transition-colors duration-200"
-              onClick={() => openCreateModal("USER")}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth="1.5"
-                stroke="currentColor"
-                className="w-5 h-5"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 4.5v15m7.5-7.5h-15"
-                />
-              </svg>
-              Nuevo Usuario
-            </button>
+            
           </div>
         </div>
 
@@ -246,13 +294,14 @@ const Users = () => {
                     </td>
                     <td className="px-6 py-4">{user.email}</td>
                     <td className="px-6 py-4">
-                    <RoleBadge role={user.role} />
+                      <RoleBadge role={user.role} />
                     </td>
                     <td className="px-6 py-4">
                       <button
                         onClick={() => handleDelete(user.id)}
                         className="font-medium text-red-600 dark:text-red-500 hover:underline"
                         title="Eliminar"
+                        disabled={isLoading}
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -294,6 +343,7 @@ const Users = () => {
                   type="button"
                   className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
                   onClick={closeModal}
+                  disabled={isLoading}
                 >
                   <svg
                     className="w-3 h-3"
@@ -327,6 +377,7 @@ const Users = () => {
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     value={formik.values.email}
+                    disabled={isLoading}
                   />
                   {formik.touched.email && formik.errors.email ? (
                     <p className="mt-1 text-sm text-red-600">{formik.errors.email}</p>
@@ -346,6 +397,7 @@ const Users = () => {
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     value={formik.values.name}
+                    disabled={isLoading}
                   />
                   {formik.touched.name && formik.errors.name ? (
                     <p className="mt-1 text-sm text-red-600">{formik.errors.name}</p>
@@ -365,6 +417,7 @@ const Users = () => {
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     value={formik.values.password}
+                    disabled={isLoading}
                   />
                   {formik.touched.password && formik.errors.password ? (
                     <p className="mt-1 text-sm text-red-600">{formik.errors.password}</p>
@@ -375,7 +428,7 @@ const Users = () => {
               <div className="flex items-center p-4 md:p-5 border-t border-gray-200 rounded-b dark:border-gray-600">
                 <button
                   type="submit"
-                  disabled={formik.isSubmitting}
+                  disabled={formik.isSubmitting || isLoading}
                   className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 disabled:opacity-50"
                 >
                   {isLoading ? (

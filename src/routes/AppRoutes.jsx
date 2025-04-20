@@ -19,56 +19,63 @@ import Dashboard from '../pages/Restaurantero/Dashbord';
 import AuthContext from '../config/context/auth-context';
 import NotFound from '../pages/errorPages/404';
 import AdminLayout from './../layout/adminLayout';
+import RestaurantLayout from '../layout/restaurantLayout'
 import RequestReset from '../Components/RequestReset';
 import ResetPassword from '../Components/ResetPassword';
+import MenuR from '../pages/Restaurantero/Menu';
+import FoodR from '../pages/Restaurantero/Food';
+import Admindashbord from '../pages/Admin/Admindashbord';
+import Restarantes from '../pages/Restaurantero/Restaurants';
+import Users from '../pages/Admin/Users';
+import PublicLayout from '../layout/PublicLayout'
 
 const AppRouter = () => {
   const { user } = useContext(AuthContext);
+  console.log(user?.role)
   const isUserSignedIn = user?.signed;
 
   const routesFromRole = (role) => {
     switch (role) {
-      case 'ADMIN_ROLE':
+      case 'ADMIN':
         return (
           <Route path="/" element={<AdminLayout />}>
-            <Route path="dashboard" element={<Dashboard />} />
-            <Route path="Menu/:restaurantId" element={<Menu />} />
-            <Route path="food/:menuId" element={<Food />} />
-            <Route path="order" element={<Orders />} />
-            <Route path="cart" element={<Cart />} />
-            <Route path="perfil" element={<Profile />} />
+            <Route index element={<Admindashbord />} />
+            
+            <Route path="users/" element={<Users />} />
             <Route path="request-password" element={<RequestReset />} />
             <Route path="reset-password" element={<ResetPassword />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         );
 
-      case 'CLIENT_ROLE':
+      case 'USER':
         return (
-          <Route path="/" element={<AdminLayout />}>
-            <Route path="Menu/:restaurantId" element={<Menu />} />
-            <Route path="food/:menuId" element={<Food />} />
-            <Route path="order" element={<Orders />} />
-            <Route path="cart" element={<Cart />} />
-            <Route path="perfil" element={<Profile />} />
-            <Route path="request-password" element={<RequestReset />} />
-            <Route path="reset-password" element={<ResetPassword />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Route>
+          <Route path="/" element={<PublicLayout />}>
+          <Route index element={<Home />} />
+          <Route path="Menu/:restaurantId" element={<Menu />} />
+          <Route path="food/:menuId" element={<Food />} />
+          <Route path="order/" element={<Orders />} />
+          <Route path="cart/" element={<Cart />} />
+          <Route path="perfil/" element={<Profile />} />
+          <Route path="request-password" element={<RequestReset />} />
+          <Route path="reset-password" element={<ResetPassword />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Route>
         );
 
-      case 'RESTAURANTERO':
+      case 'RESTAURANT_OWNER':
         return (
-          <Route path="/" element={<AdminLayout />}>
-            <Route path="dashboard" element={<Dashboard />} />
-            <Route path="Menu/:restaurantId" element={<Menu />} />
-            <Route path="food/:menuId" element={<Food />} />
+          <Route path="/" element={<RestaurantLayout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="restaurants/" element={<Restarantes />} />
+            <Route path="menu/" element={<MenuR />} />
+            <Route path="food/" element={<FoodR />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         );
 
       default:
-        return <Route path="*" element={<NotFound />} />;
+        return <Route path="*" element={<Home/>} />;
     }
   };
 
@@ -79,7 +86,7 @@ const AppRouter = () => {
           routesFromRole(user?.role) // O user?.roles[0]?.rol si manejas array
         ) : (
           <>
-            <Route path="/" element={<Home />} />
+            <Route index element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/request-password" element={<RequestReset />} />

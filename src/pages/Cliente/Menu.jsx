@@ -103,19 +103,38 @@ const Menu = () => {
   return (
     <div className="grid grid-cols-12 gap-2 p-4">
       {/* Sidebar del restaurante */}
-      <div className="col-span-2 row-span-2 bg-white-500 p-4 text-gray">
+      <div className="col-span-2 row-span-2 bg-white-500  text-gray">
+        <button
+          onClick={() => navigate(-1)}
+          className="bg-black hover:bg-black text-white mt-[-94px] font-semibold py-2 px-4 rounded shadow transition duration-300"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+            class="size-6"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"
+            />
+          </svg>
+        </button>
         <h2 className="text-lg font-bold text-center mb-2">Restaurante</h2>
         {selectedRestaurant ? (
           <div className="mb-4">
             {selectedRestaurant.restaurant_image ? (
-                <img
-                  src={`data:${selectedRestaurant.restaurant_image.type};base64,${selectedRestaurant.restaurant_image.data}`}
-                  alt={selectedRestaurant.name}
-                  style={{ width: '200px', height: 'auto' }}
-                />
-              ) : (
-                <p>No hay imagen disponible.</p>
-              )}
+              <img
+                src={`data:${selectedRestaurant.restaurant_image.type};base64,${selectedRestaurant.restaurant_image.data}`}
+                alt={selectedRestaurant.name}
+                style={{ width: "200px", height: "auto" }}
+              />
+            ) : (
+              <p>No hay imagen disponible.</p>
+            )}
             <h3 className="text-xl font-bold text-center mt-2">
               {selectedRestaurant.name}
             </h3>
@@ -180,50 +199,31 @@ const Menu = () => {
       </div>
 
       {/* Menús */}
+
       <div className="col-span-10 bg-white-500 p-4 text-white text-center grid grid-cols-2 gap-3 border-1">
         {menus.length > 0 ? (
           menus.map((menu) => (
             <div
               key={menu.id}
-              className="flex flex-col md:flex-row items-center h-25 w-full p-5 bg-white dark:bg-gray-800 relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-px after:bg-gray-200 dark:after:bg-gray-600 after:w-full hover:scale-105 transition-transform duration-300"
+              className="flex flex-col md:flex-row items-center h-auto w-full p-5 bg-white dark:bg-gray-800 relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-px after:bg-gray-200 dark:after:bg-gray-600 after:w-full hover:scale-105 transition-transform duration-300 cursor-pointer"
               onClick={() => navigate(`/food/${menu.id}`)}
             >
-              <div className="flex flex-col items-center md:w-1/2">
-                <h5 className="mb-2 text-xl font-bold tracking-tight text-gray-900 dark:text-white">
+              <div className="flex flex-col w-full">
+                <h5 className="mb-2 text-xl font-bold tracking-tight text-gray-900 dark:text-white w-full text-left">
                   {menu.name}
                 </h5>
-                <p className="mb-3 font-normal text-gray-700 dark:text-gray-400 text-center md:text-left">
+                <p className="mb-3 font-normal text-gray-700 dark:text-gray-400 w-full text-left break-words">
                   {menu.description}
                 </p>
               </div>
             </div>
           ))
         ) : (
-          <p>No hay menús disponibles para este restaurante.</p>
+          <p className="text-gray-800 dark:text-white col-span-2">
+            No hay menús disponibles
+          </p>
         )}
       </div>
-
-      {/* Modal */}
-      {isModalOpen && selectedMenu && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
-          onClick={closeModal}
-        >
-          <div
-            className="bg-white rounded-lg shadow-lg max-w-md w-full p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 className="text-xl font-bold mb-4">{selectedMenu.name}</h2>
-            <p className="mb-4">{selectedMenu.description}</p>
-            <button
-              onClick={closeModal}
-              className="mt-4 bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600"
-            >
-              Cerrar
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

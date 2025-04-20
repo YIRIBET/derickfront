@@ -1,256 +1,454 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
+import { useFormik } from "formik";
+import * as Yup from "yup";
+import Swal from 'sweetalert2';
+import AuthContext from '../../config/context/auth-context';
+import AxiosClient from "../../config/http-client/axios-client";
 
 const Menu = () => {
-  const API_URL = "http://127.0.0.1:8000/menus/api/";
+  const API_URL = "menus/api/";
+  const RESTAURANTS_URL = "restaurante/api/";
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedMenu, setSelectedMenu] = useState(null);
   const [menus, setMenus] = useState([]);
+  const [restaurants, setRestaurants] = useState([]); 
   const [isLoading, setIsLoading] = useState(true);
-  const [formData, setFormData] = useState({
-    restaurants: 1,
-    name: "",
-    description: "",
-    start_date: new Date().toISOString(),
+  const { user } = useContext(AuthContext);
+  const isUserSignedIn = user?.signed || false;
+
+  // Esquema de validación con Yup
+  const menuSchema = Yup.object().shape({
+    restaurants: Yup.number()
+      .required("Restaurante es requerido")
+      .test('valid-restaurant', 'Seleccione un restaurante válido', value => {
+        return restaurants.some(rest => rest.id === value);
+      }),
+    name: Yup.string()
+      .min(3, "Mínimo 3 caracteres")
+      .max(50, "Máximo 50 caracteres")
+      .required("Nombre es requerido"),
+    description: Yup.string()
+      .min(10, "Mínimo 10 caracteres")
+      .required("Descripción es requerida"),
+    start_date: Yup.date()
+      .required("Fecha de inicio es requerida")
+      .min(new Date(), "La fecha no puede ser en el pasado")
   });
 
-  // Hardcodeado para pruebas
-  const getAuthToken = () => {
-    return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ0NTc4NTQzLCJpYXQiOjE3NDM5NzM3NDMsImp0aSI6IjJkMTViYTljOThhYTQzM2U5MjViOTk5YmMzNTA5YzJlIiwidXNlcl9pZCI6MywiZW1haWwiOiJpbGNlQGdtYWlsLmNvbSIsInJvbGUiOiJVU0VSIn0.AxH6QoQr7NZEAL_WYvT12qSEnqhnTwwF26WSGLk_K_c"; // Token hardcodeado
+  // Obtener restaurantes disponibles
+  const fetchRestaurants = async () => {
+    try {
+      const response = await AxiosClient.get(RESTAURANTS_URL);
+      setRestaurants(response.data);
+    } catch (error) {
+      console.error("Error fetching restaurants:", error);
+      showErrorAlert("Error", "No se pudieron cargar los restaurantes");
+    }
   };
 
-  // Fetch menus from API
-  useEffect(() => {
-    const fetchMenus = async () => {
-      try {
-        const token = getAuthToken(); // Recupera el token
-        const response = await fetch(API_URL, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`, // Agrega el token al header
-          },
-        });
-        if (!response.ok) throw new Error("Network response was not ok");
-        const data = await response.json();
-        setMenus(data);
-        setIsLoading(false);
-      } catch (error) {
-        console.error("Error fetching menus:", error);
-        setIsLoading(false);
-      }
-    };
-    fetchMenus();
-  }, []);
+  // Obtener menús
+  const fetchMenus = async () => {
+    setIsLoading(true);
+    try {
+      const response = await AxiosClient.get(API_URL);
+      setMenus(response.data);
+    } catch (error) {
+      console.error("Error fetching menus:", error);
+      showErrorAlert("Error", "No se pudieron cargar los menús");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  // Mostrar alerta de éxito
+  const showSuccessAlert = (title, message) => {
+    Swal.fire({
+      title: title,
+      text: message,
+      icon: 'success',
+      confirmButtonColor: '#3085d6',
+      confirmButtonText: 'Aceptar'
+    });
+  };
+
+  // Mostrar alerta de error
+  const showErrorAlert = (title, message) => {
+    Swal.fire({
+      title: title,
+      text: message,
+      icon: 'error',
+      confirmButtonColor: '#d33',
+      confirmButtonText: 'Aceptar'
+    });
+  };
+
+  // Mostrar diálogo de confirmación
+  const showConfirmDialog = async (title, text) => {
+    const result = await Swal.fire({
+      title: title,
+      text: text,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Sí, continuar',
+      cancelButtonText: 'Cancelar'
+    });
+    return result.isConfirmed;
+  };
+
+  // Configuración de Formik
+  const formik = useFormik({
+    initialValues: {
+      restaurants: '',
+      name: "",
+      description: "",
+      start_date: new Date().toISOString().split('T')[0]
+    },
+    validationSchema: menuSchema,
+    onSubmit: async (values, { setSubmitting }) => {
+      setIsLoading(true);
+      
+      if (!isUserSignedIn) {
+        showErrorAlert("Error", "Debe iniciar sesión para realizar esta acción");
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const method = selectedMenu ? 'PUT' : 'POST';
+        const url = selectedMenu ? `${API_URL}${selectedMenu.id}/` : API_URL;
+
+        const data = {
+          restaurants: values.restaurants,
+          name: values.name,
+          description: values.description,
+          start_date: values.start_date
+        };
+
+        await AxiosClient({
+          url,
+          method,
+          data
+        });
+
+        showSuccessAlert(
+          selectedMenu ? "¡Menú actualizado!" : "¡Menú creado!",
+          selectedMenu 
+            ? "El menú ha sido actualizado exitosamente"
+            : "El menú ha sido creado exitosamente"
+        );
+        
+        fetchMenus();
+        closeModal();
+      } catch (error) {
+        console.error("Error saving menu:", error);
+        showErrorAlert(
+          "Error al guardar",
+          error.response?.data?.message || "Ocurrió un error al guardar el menú"
+        );
+      } finally {
+        setIsLoading(false);
+        setSubmitting(false);
+      }
+    },
+  });
+
+  // Abrir modal para editar/crear
   const openModal = (menu = null) => {
+    if (!isUserSignedIn) {
+      showErrorAlert("Error", "Debe iniciar sesión para realizar esta acción");
+      return;
+    }
+
+    setSelectedMenu(menu);
     if (menu) {
-      setSelectedMenu(menu);
-      setFormData({
-        restaurants: menu.restaurants,
+      formik.setValues({
+        restaurants: menu.restaurants.id,
         name: menu.name,
         description: menu.description,
-        start_date: menu.start_date,
+        start_date: menu.start_date.split('T')[0]
       });
     } else {
-      setSelectedMenu(null);
-      setFormData({
-        restaurants: 1,
-        name: "",
-        description: "",
-        start_date: new Date().toISOString(),
-      });
+      formik.resetForm();
+      formik.setFieldValue('start_date', new Date().toISOString().split('T')[0]);
     }
     setIsModalOpen(true);
   };
 
+  // Cerrar modal
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedMenu(null);
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const token = getAuthToken(); // Recupera el token
-      const url = selectedMenu ? `${API_URL}${selectedMenu.id}/` : API_URL;
-      const method = selectedMenu ? "PUT" : "POST";
-
-      const response = await fetch(url, {
-        method: method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // Agrega el token al header
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) throw new Error("Network response was not ok");
-
-      // Refresh menu list
-      const updatedResponse = await fetch(API_URL, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // Agrega el token al header
-        },
-      });
-      const updatedData = await updatedResponse.json();
-      setMenus(updatedData);
-      closeModal();
-    } catch (error) {
-      console.error("Error saving menu:", error);
-    }
-  };
-
+  // Eliminar menú
   const handleDelete = async (id) => {
-    if (window.confirm("¿Estás seguro de que quieres eliminar este menú?")) {
-      try {
-        const token = getAuthToken(); // Recupera el token
-        const response = await fetch(`${API_URL}${id}/`, {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`, // Agrega el token al header
-          },
-        });
+    const confirmed = await showConfirmDialog(
+      "¿Eliminar menú?",
+      "Esta acción no se puede deshacer"
+    );
+    
+    if (!confirmed) return;
 
-        if (!response.ok) throw new Error("Network response was not ok");
-
-        setMenus(menus.filter((menu) => menu.id !== id));
-      } catch (error) {
-        console.error("Error deleting menu:", error);
-      }
+    setIsLoading(true);
+    try {
+      await AxiosClient.delete(`${API_URL}${id}/`);
+      
+      showSuccessAlert(
+        "Menú eliminado",
+        "El menú ha sido eliminado del sistema"
+      );
+      fetchMenus();
+    } catch (error) {
+      console.error("Error deleting menu:", error);
+      showErrorAlert(
+        "Error al eliminar",
+        error.response?.data?.message || "No se pudo eliminar el menú"
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  // Cargar datos iniciales
+  useEffect(() => {
+    fetchRestaurants();
+    fetchMenus();
+  }, []);
 
   return (
-    <>
-      <div className="p-4 sm:ml-64 mt-9">
-        <div className="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700">
-          <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
-            <div className="flex justify-between items-center mb-6">
-              <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
-                Menús disponibles
-              </h1>
-              <div className="flex justify-center items-center">
-                <button
-                  className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white font-medium rounded-lg px-4 py-2.5 transition-colors duration-200 dark:bg-gray-700 dark:hover:bg-gray-600"
-                  onClick={() => openModal()}
+    <div className="p-4 sm:ml-64 mt-[-40px] ">
+      <div className="p-4 border-2 border-gray-200 rounded-lg dark:border-gray-700">
+        <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
+              Menús disponibles
+            </h1>
+            <div className="flex justify-center items-center">
+              <button
+                className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white font-medium rounded-lg px-4 py-2.5 transition-colors duration-200 dark:bg-gray-700 dark:hover:bg-gray-600"
+                onClick={() => openModal()}
+                disabled={isLoading}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth="1.5"
+                  stroke="currentColor"
+                  className="w-5 h-5"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth="1.5"
-                    stroke="currentColor"
-                    className="w-5 h-5"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M12 4.5v15m7.5-7.5h-15"
-                    />
-                  </svg>
-                  Agregar menú
-                </button>
-              </div>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 4.5v15m7.5-7.5h-15"
+                  />
+                </svg>
+                Agregar menú
+              </button>
             </div>
-
-            {isLoading ? (
-              <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-900 dark:border-gray-100"></div>
-              </div>
-            ) : (
-              <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-                <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                  <tr>
-                    <th scope="col" className="px-6 py-3">
-                      Restaurante
-                    </th>
-                    <th scope="col" className="px-6 py-3">
-                      Nombre
-                    </th>
-                    <th scope="col" className="px-6 py-3">
-                      Descripción
-                    </th>
-                    <th scope="col" className="px-6 py-3">
-                      Fecha Inicio
-                    </th>
-                    <th scope="col" className="px-6 py-3">
-                      Acciones
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {menus.map((menu) => (
-                    <tr
-                      key={menu.id}
-                      className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
-                    >
-                      <td className="px-6 py-4">{menu.restaurants}</td>
-                      <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                        {menu.name}
-                      </td>
-                      <td className="px-6 py-4">{menu.description}</td>
-                      <td className="px-6 py-4">
-                        {new Date(menu.start_date).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <button
-                          onClick={() => openModal(menu)}
-                          className="font-medium text-blue-600 dark:text-blue-500 hover:underline mr-3"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke-width="1.5"
-                            stroke="currentColor"
-                            className="size-6"
-                          >
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
-                            />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={() => handleDelete(menu.id)}
-                          className="font-medium text-red-600 dark:text-red-500 hover:underline"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke-width="1.5"
-                            stroke="currentColor"
-                            className="size-6"
-                          >
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0=" />
-                          </svg>
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
           </div>
+
+          {isLoading ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-900 dark:border-gray-100"></div>
+            </div>
+          ) : (
+            <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+              <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                <tr>
+                  
+                  <th scope="col" className="px-6 py-3">Nombre</th>
+                  <th scope="col" className="px-6 py-3">Descripción</th>
+                  <th scope="col" className="px-6 py-3">Fecha Inicio</th>
+                  <th scope="col" className="px-6 py-3">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {menus.map((menu) => (
+                  <tr
+                    key={menu.id}
+                    className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                  >
+                    <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                      {menu.name}
+                    </td>
+                    <td className="px-6 py-4">{menu.description}</td>
+                    <td className="px-6 py-4">
+                      {new Date(menu.start_date).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button
+                        onClick={() => openModal(menu)}
+                        className="font-medium text-blue-600 dark:text-blue-500 hover:underline mr-3"
+                        disabled={isLoading}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth="1.5"
+                          stroke="currentColor"
+                          className="size-6"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
+                          />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => handleDelete(menu.id)}
+                        className="font-medium text-red-600 dark:text-red-500 hover:underline"
+                        disabled={isLoading}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth="1.5"
+                          stroke="currentColor"
+                          className="size-6"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+                          />
+                        </svg>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
-    </>
+
+      {/* Modal para formulario */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+            <h2 className="text-2xl font-semibold mb-4">{selectedMenu ? "Editar Menú" : "Agregar Menú"}</h2>
+            <form onSubmit={formik.handleSubmit}>
+              <div className="mb-4">
+                <label htmlFor="restaurants" className="block text-sm font-medium text-gray-700">Restaurante</label>
+                <select
+                  id="restaurants"
+                  name="restaurants"
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  value={formik.values.restaurants}
+                  className="mt-1 block w-full px-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                >
+                  <option value="">Seleccione un restaurante</option>
+                  {restaurants.map(restaurant => (
+                    <option key={restaurant.id} value={restaurant.id}>{restaurant.name}</option>
+                  ))}
+                </select>
+                {formik.touched.restaurants && formik.errors.restaurants ? (
+                  <p className="mt-1 text-sm text-red-600">{formik.errors.restaurants}</p>
+                ) : null}
+              </div>
+              <div className="mb-4">
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700">Nombre</label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  value={formik.values.name}
+                  className="mt-1 block w-full px-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+                {formik.touched.name && formik.errors.name ? (
+                  <p className="mt-1 text-sm text-red-600">{formik.errors.name}</p>
+                ) : null}
+              </div>
+              <div className="mb-4">
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700">Descripción</label>
+                <textarea
+                  id="description"
+                  name="description"
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  value={formik.values.description}
+                  className="mt-1 block w-full px-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+                {formik.touched.description && formik.errors.description ? (
+                  <p className="mt-1 text-sm text-red-600">{formik.errors.description}</p>
+                ) : null}
+              </div>
+              <div className="mb-4">
+                <label htmlFor="start_date" className="block text-sm font-medium text-gray-700">Fecha de Inicio</label>
+                <input
+                  type="date"
+                  id="start_date"
+                  name="start_date"
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  value={formik.values.start_date}
+                  className="mt-1 block w-full px-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+                {formik.touched.start_date && formik.errors.start_date ? (
+                  <p className="mt-1 text-sm text-red-600">{formik.errors.start_date}</p>
+                ) : null}
+              </div>
+              <div className="flex justify-end space-x-4">
+                <button 
+                  type="button" 
+                  onClick={closeModal} 
+                  className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg"
+                  disabled={isLoading}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit" 
+                  className="bg-black text-white px-4 py-2 rounded-lg"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <span className="flex items-center">
+                      <svg
+                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      Procesando...
+                    </span>
+                  ) : (
+                    selectedMenu ? "Actualizar" : "Agregar"
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

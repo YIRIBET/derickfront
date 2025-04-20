@@ -11,8 +11,8 @@ const AdminLayout = ({ children }) => {
   return (
     <div className="" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <Navbar /> {/* El Navbar se incluye al inicio */}
-      
-      <div className='container w-full p-5 pt-[100px] sm:pt-[120px] md:pt-[140px]' style={{ flex: 1 } }>
+      <AdminSidebar/>
+      <div className='container w-full p-5 pt-[100px] sm:pt-[120px] md:pt-[140px] max-w-full' style={{ flex: 1 } }>
         <Outlet />
       </div>
       <Footer /> {/* El Footer se incluye al final */}

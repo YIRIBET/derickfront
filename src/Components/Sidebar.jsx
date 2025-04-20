@@ -1,17 +1,21 @@
-const Sidebar =()=>{
-    return(
-        <>
-        <aside
+import React from "react";
+import { Link } from "react-router-dom";
+import Pythones from "../assets/pythonEsLogo.png";
+
+const Sidebar = () => {
+  return (
+    <>
+      <aside
         id="logo-sidebar"
-        className="fixed top-5 left-0 z-40 w-64 h-screen pt-20 transition-transform -translate-x-full bg-white border-r border-gray-200 sm:translate-x-0 dark:bg-gray-800 dark:border-gray-700"
+        class="fixed top-5 left-0 z-10 w-64 h-screen pt-20 transition-transform -translate-x-full bg-white/80 border-r border-gray-200 sm:translate-x-0 dark:bg-gray-800/80 dark:border-gray-700 backdrop-blur"
         aria-label="Sidebar"
       >
-        <div className="h-full px-3 pb-4 overflow-y-auto bg-white dark:bg-gray-800">
-          <ul className="space-y-2 font-medium mb-5">
+        <div class="h-full px-3 pb-4 overflow-y-auto bg-white dark:bg-gray-800">
+          <ul class="space-y-2 font-medium mb-5">
             <li>
               <a
-                href="#"
-                className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+                href="/dashboard"
+                class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -19,7 +23,7 @@ const Sidebar =()=>{
                   viewBox="0 0 24 24"
                   stroke-width="1.5"
                   stroke="currentColor"
-                  className="size-6"
+                  class="size-6"
                 >
                   <path
                     stroke-linecap="round"
@@ -28,16 +32,39 @@ const Sidebar =()=>{
                   />
                 </svg>
 
-                <span className="flex-1 ms-3 whitespace-nowrap">Inicio</span>
+                <span class="flex-1 ms-3 whitespace-nowrap">Inicio</span>
               </a>
             </li>
             <li>
               <a
-                href="#"
-                className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+                href="/restaurants"
+                class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
               >
                 <svg
-                  className="w-6 h-6 text-gray-800 dark:text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                  class="size-6"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349M3.75 21V9.349m0 0a3.001 3.001 0 0 0 3.75-.615A2.993 2.993 0 0 0 9.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 0 0 2.25 1.016c.896 0 1.7-.393 2.25-1.015a3.001 3.001 0 0 0 3.75.614m-16.5 0a3.004 3.004 0 0 1-.621-4.72l1.189-1.19A1.5 1.5 0 0 1 5.378 3h13.243a1.5 1.5 0 0 1 1.06.44l1.19 1.189a3 3 0 0 1-.621 4.72M6.75 18h3.75a.75.75 0 0 0 .75-.75V13.5a.75.75 0 0 0-.75-.75H6.75a.75.75 0 0 0-.75.75v3.75c0 .414.336.75.75.75Z"
+                  />
+                </svg>
+
+                <span class="flex-1 ms-3 whitespace-nowrap">Restaurantes</span>
+              </a>
+            </li>
+            <li>
+              <a
+                href="/Menu"
+                class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+              >
+                <svg
+                  class="w-6 h-6 text-gray-800 dark:text-white"
                   aria-hidden="true"
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
@@ -54,16 +81,16 @@ const Sidebar =()=>{
                   />
                 </svg>
 
-                <span className="flex-1 ms-3 whitespace-nowrap">Menus</span>
+                <span class="flex-1 ms-3 whitespace-nowrap">Menus</span>
               </a>
             </li>
             <li>
               <a
-                href="#"
-                className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+                href="/food"
+                class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
               >
                 <svg
-                  className="w-6 h-6 text-gray-800 dark:text-white"
+                  class="w-6 h-6 text-gray-800 dark:text-white"
                   aria-hidden="true"
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
@@ -80,13 +107,13 @@ const Sidebar =()=>{
                   />
                 </svg>
 
-                <span className="flex-1 ms-3 whitespace-nowrap">Comida</span>
+                <span class="flex-1 ms-3 whitespace-nowrap">Comida</span>
               </a>
             </li>
             <li>
               <a
                 href="#"
-                className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+                class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -94,7 +121,7 @@ const Sidebar =()=>{
                   viewBox="0 0 24 24"
                   stroke-width="1.5"
                   stroke="currentColor"
-                  className="size-6"
+                  class="size-6"
                 >
                   <path
                     stroke-linecap="round"
@@ -103,12 +130,13 @@ const Sidebar =()=>{
                   />
                 </svg>
 
-                <span className="flex-1 ms-3 whitespace-nowrap">Cerrar sesión</span>
+                <span class="flex-1 ms-3 whitespace-nowrap">Cerrar sesión</span>
               </a>
             </li>
           </ul>
         </div>
       </aside>
-        </>
-    )
-}
+    </>
+  );
+};
+export default Sidebar;

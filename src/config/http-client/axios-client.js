@@ -29,7 +29,7 @@ AxiosClient.interceptors.request.use(
 const refreshAccessToken = async (refreshToken) => {
   try {
     const response = await axios.post(
-      `${SERVER_URL}users/api/token/refresh/`,
+      `${SERVER_URL}api/auth/token/refresh/`,
       { refresh: refreshToken }
     );
     const { access } = response.data;

@@ -35,21 +35,18 @@ function RequestReset() {
 
   return (
     <div
-      className="relative flex items-center justify-center min-h-screen bg-cover bg-center"
+      className="relative flex items-center justify-center min-h-screen bg-cover bg-center bg-gray-100"
       // style={{ backgroundImage: `url(${Fondo})` }}
     >
-      
-      <img
-        src={Fondo}
-        alt="fondo"
-        className="absolute inset-0 w-full h-full object-cover opacity-20 -z-10"
-      />
 
       {/* Formulario encima */}
       <div className="relative z-10 w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
         <h2 className="text-2xl font-bold text-center text-gray-900">
           Recuperar contraseña
         </h2>
+        <p className="text-gray-500">
+          Ingresa tu correo electrónico para recibir un enlace de recuperación
+        </p>
 
         {message.text && (
           <div
@@ -64,22 +61,41 @@ function RequestReset() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
+          <div className="relative">
             <label
               htmlFor="email"
               className="block text-sm font-medium text-gray-700"
             >
               Correo electrónico
             </label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="tucorreo@ejemplo.com"
-              required
-              className="w-full px-4 py-2 mt-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
-            />
+
+            <div className="relative mt-1">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth="1.5"
+                  stroke="currentColor"
+                  className="w-5 h-5 text-gray-400"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M16.5 12a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Zm0 0c0 1.657 1.007 3 2.25 3S21 13.657 21 12a9 9 0 1 0-2.636 6.364M16.5 12V8.25"
+                  />
+                </svg>
+              </div>
+              <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="tucorreo@ejemplo.com"
+                required
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-black-500 focus:border-black-500"
+              />
+            </div>
           </div>
 
           <button
@@ -87,8 +103,8 @@ function RequestReset() {
             disabled={isLoading}
             className={`w-full px-4 py-2 font-medium text-white rounded-md ${
               isLoading
-                ? "bg-[#ff6227] cursor-not-allowed"
-                : "bg-[#ff6227] hover:bg-[#ff6227]"
+                ? "bg-black cursor-not-allowed"
+                : "bg-black hover:bg-gray-600"
             } focus:outline-none focus:ring-2 focus:ring-green-500`}
           >
             {isLoading ? (
@@ -122,7 +138,7 @@ function RequestReset() {
         </form>
 
         <div className="text-center mt-4">
-          <a href="/login" className="text-sm text-green-600 hover:underline">
+          <a href="/login" className="text-sm text-[#ff6227] hover:underline">
             Volver al inicio de sesión
           </a>
         </div>

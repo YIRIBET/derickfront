@@ -1,6 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useFormik } from "formik";
+import AuthContext from '../../config/context/auth-context';
+import AxiosClient from "../../config/http-client/axios-client";
 import * as Yup from "yup";
+import Swal from 'sweetalert2';
+import axios from "axios";
+
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -42,11 +47,10 @@ const restaurantSchema = Yup.object().shape({
   user: Yup.number().required("ID de usuario es requerido"),
   restaurant_image: Yup.mixed()
     .test("is-required", "Logo es requerido", function (value) {
-      // "this.parent" accede a los otros valores del formulario
       return !this.parent.isCreating || (value !== undefined && value !== null);
     })
     .test("file-size", "El archivo es muy grande (máx 1MB)", (value) => {
-      if (!value) return true; // No hay archivo = válido (para updates)
+      if (!value) return true;
       return value.size <= 1024 * 1024;
     })
     .test("file-type", "Solo imágenes JPG/PNG", (value) => {
@@ -61,8 +65,9 @@ const Restaurants = () => {
   const [currentRestaurant, setCurrentRestaurant] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
-  const TOKEN =
-    "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ0NjEwNzg3LCJpYXQiOjE3NDQwMDU5ODcsImp0aSI6ImY0NTFlYzI1NWMzZDQ2ZTRhNzRlZjVjYTY2ZTI2MzYxIiwidXNlcl9pZCI6MywiZW1haWwiOiJ1c2VyQGNvcnJlby5jb20iLCJyb2xlIjoiVVNFUiJ9.LAOYeVLTu7c6p9l9LHiBkQqUENlKy3VvuD84gxEFGYw"; // Reemplaza con tu token
+  
+  const { user } = useContext(AuthContext);
+  const isUserSignedIn = user?.signed || false;
 
   // Datos iniciales del formulario
   const initialValues = {
@@ -70,10 +75,47 @@ const Restaurants = () => {
     name: "",
     address: "",
     phone: "",
-    user: "",
+    user: user?.id || "",
     description: "",
     restaurant_image: null,
     isCreating: true,
+  };
+
+  // Mostrar alerta de éxito
+  const showSuccessAlert = (title, message) => {
+    Swal.fire({
+      title: title,
+      text: message,
+      icon: 'success',
+      confirmButtonColor: '#3085d6',
+      confirmButtonText: 'Aceptar'
+    });
+  };
+
+  // Mostrar alerta de error
+  const showErrorAlert = (title, message) => {
+    Swal.fire({
+      title: title,
+      text: message,
+      icon: 'error',
+      confirmButtonColor: '#d33',
+      confirmButtonText: 'Aceptar'
+    });
+  };
+
+  // Mostrar diálogo de confirmación
+  const showConfirmDialog = async (title, text) => {
+    const result = await Swal.fire({
+      title: title,
+      text: text,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Sí, continuar',
+      cancelButtonText: 'Cancelar'
+    });
+    return result.isConfirmed;
   };
 
   // Configuración de Formik
@@ -82,17 +124,22 @@ const Restaurants = () => {
     validationSchema: restaurantSchema,
     onSubmit: async (values, { setSubmitting }) => {
       setIsLoading(true);
+      
+      if (!isUserSignedIn) {
+        showErrorAlert("Error", "Debe iniciar sesión para realizar esta acción");
+        setIsLoading(false);
+        return;
+      }
+
       try {
         const method = values.isCreating ? "POST" : "PUT";
         const endpoint = values.isCreating
-          ? "http://localhost:8000/restaurante/api/"
-          : `http://localhost:8000/restaurante/api/${values.id}/`;
+          ? "restaurante/api/"
+          : `restaurante/api/${values.id}/`;
 
         let imageData = null;
         if (values.restaurant_image) {
-          const imageBase64 = await convertFileToBase64(
-            values.restaurant_image
-          );
+          const imageBase64 = await convertFileToBase64(values.restaurant_image);
           imageData = {
             name: values.restaurant_image.name,
             type: values.restaurant_image.type,
@@ -107,35 +154,33 @@ const Restaurants = () => {
           description: values.description,
           user: values.user,
           ...(values.isCreating && { restaurant_image: imageData }),
-          ...(!values.isCreating &&
-            imageData && { restaurant_image: imageData }),
+          ...(!values.isCreating && imageData && { restaurant_image: imageData }),
         };
 
-        const response = await fetch(endpoint, {
+        await AxiosClient({
+          url: endpoint,
           method,
-          headers: {
-            Authorization: TOKEN,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(data),
+          data,
         });
 
-        if (!response.ok) throw new Error("Error en la solicitud");
-
-        const result = await response.json();
-        alert(
-          values.isCreating
-            ? "¡Restaurante creado!"
-            : "¡Restaurante actualizado!"
+        showSuccessAlert(
+          values.isCreating ? "¡Restaurante creado!" : "¡Restaurante actualizado!",
+          values.isCreating 
+            ? "El restaurante ha sido registrado exitosamente"
+            : "Los cambios han sido guardados correctamente"
         );
+        
         fetchRestaurants();
         closeModal();
       } catch (error) {
         console.error("Error:", error);
-        alert("Error al procesar la solicitud");
+        showErrorAlert(
+          "Error al procesar la solicitud",
+          error.response?.data?.message || "Ocurrió un error inesperado"
+        );
       } finally {
-        setSubmitting(false);
         setIsLoading(false);
+        setSubmitting(false);
       }
     },
   });
@@ -170,15 +215,22 @@ const Restaurants = () => {
   const fetchRestaurants = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("http://localhost:8000/restaurante/api/", {
-        headers: {
-          Authorization: TOKEN,
-        },
+      const response = await AxiosClient({
+        url: "restaurante/api/",
+        method: 'GET',
       });
-      const data = await response.json();
-      setRestaurants(data);
+      
+      if (Array.isArray(response.data)) {
+        setRestaurants(response.data);
+      } else {
+        throw new Error("Formato de datos inesperado");
+      }
     } catch (error) {
       console.error("Error fetching restaurants:", error);
+      showErrorAlert(
+        "Error al cargar restaurantes",
+        "No se pudieron obtener los datos de los restaurantes"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -186,11 +238,17 @@ const Restaurants = () => {
 
   // Abrir modal para editar
   const openEditModal = (restaurant) => {
+    if (!isUserSignedIn) {
+      showErrorAlert("Error", "Debe iniciar sesión para editar restaurantes");
+      return;
+    }
+
     setCurrentRestaurant(restaurant);
     formik.setValues({
       ...restaurant,
       isCreating: false,
       restaurant_image: null,
+      user: user.id,
     });
     setImagePreview(restaurant.image_url || null);
     setIsModalOpen(true);
@@ -198,10 +256,16 @@ const Restaurants = () => {
 
   // Abrir modal para crear
   const openCreateModal = () => {
+    if (!isUserSignedIn) {
+      showErrorAlert("Error", "Debe iniciar sesión para crear restaurantes");
+      return;
+    }
+
     formik.resetForm();
     setCurrentRestaurant(null);
     setImagePreview(null);
     formik.setFieldValue("isCreating", true);
+    formik.setFieldValue("user", user.id);
     setIsModalOpen(true);
   };
 
@@ -214,64 +278,96 @@ const Restaurants = () => {
 
   // Eliminar restaurante
   const handleDelete = async (id) => {
-    if (window.confirm("¿Estás seguro de eliminar este restaurante?")) {
-      try {
-        const response = await fetch(
-          `http://localhost:8000/restaurante/api/${id}/`,
-          {
-            method: "DELETE",
-            headers: {
-              Authorization: TOKEN,
-            },
-          }
-        );
+    const confirmed = await showConfirmDialog(
+      "¿Eliminar restaurante?",
+      "Esta acción no se puede deshacer"
+    );
+    
+    if (!confirmed) return;
 
-        if (response.ok) {
-          alert("Restaurante eliminado");
-          fetchRestaurants();
-        }
-      } catch (error) {
-        console.error("Error deleting restaurant:", error);
-      }
+    setIsLoading(true);
+    try {
+      await AxiosClient({
+        url: `restaurante/api/${id}/`,
+        method: 'DELETE',
+      });
+      
+      showSuccessAlert(
+        "Restaurante eliminado",
+        "El restaurante ha sido eliminado del sistema"
+      );
+      fetchRestaurants();
+    } catch (error) {
+      console.error("Error deleting restaurant:", error);
+      showErrorAlert(
+        "Error al eliminar",
+        error.response?.data?.message || "No se pudo eliminar el restaurante"
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // Datos para gráficos
-  const chartData = {
-    labels: restaurants.map((r) => r.name),
-    datasets: [
-      {
-        label: "Restaurantes",
-        data: restaurants.map(() => Math.floor(Math.random() * 100) + 50), // Datos de ejemplo
-        backgroundColor: "rgba(53, 162, 235, 0.5)",
-        borderColor: "rgba(53, 162, 235, 1)",
-        borderWidth: 1,
-      },
-    ],
-  };
+ 
 
   // Cargar restaurantes al montar el componente
   useEffect(() => {
     fetchRestaurants();
   }, []);
 
+  const [chartData, setChartData] = useState({
+    labels: [],
+    datasets: [],
+  });
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(`http://localhost:8000/sales/restaurantSales/{restauranteId}/`);
+        const data = response.data;
+
+        // Suponiendo que el formato del backend es algo como:
+        // [{ month: "Enero", total_sales: 200 }, { month: "Febrero", total_sales: 300 }, ...]
+
+        const labels = data.map((item) => item.month);
+        const sales = data.map((item) => item.total_sales);
+
+        setChartData({
+          labels,
+          datasets: [
+            {
+              label: "Ventas por Mes",
+              data: sales,
+              backgroundColor: "rgba(59, 130, 246, 0.5)",
+              borderColor: "rgba(59, 130, 246, 1)",
+              borderWidth: 1,
+            },
+          ],
+        });
+      } catch (error) {
+        console.error("Error al obtener datos de ventas:", error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   return (
-    <div className="p-4 sm:ml-64 ">
+    <div className="p-4 sm:ml-64 mt-[-40px] ">
       <div className="p-4 border-2 border-gray-200 rounded-lg dark:border-gray-700">
-        {/* Sección de gráficos */}
-        <div className="mb-8">
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-            <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">
-              Estadísticas de Restaurantes
-            </h3>
-            <div className="h-64">
-              <Bar
-                data={chartData}
-                options={{ responsive: true, maintainAspectRatio: false }}
-              />
-            </div>
-          </div>
+      <div className="mb-8">
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+        <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">
+          Estadísticas de Restaurantes
+        </h3>
+        <div className="h-64">
+          <Bar
+            data={chartData}
+            options={{ responsive: true, maintainAspectRatio: false }}
+          />
         </div>
+      </div>
+    </div>
 
         {/* Tabla de restaurantes */}
         <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
@@ -282,6 +378,7 @@ const Restaurants = () => {
             <button
               className="flex items-center gap-2 bg-black hover:bg-gray-400 text-white font-medium rounded-lg px-4 py-2.5 transition-colors duration-200"
               onClick={openCreateModal}
+              disabled={isLoading}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -363,6 +460,7 @@ const Restaurants = () => {
                         onClick={() => openEditModal(restaurant)}
                         className="font-medium text-blue-600 dark:text-blue-500 hover:underline mr-3"
                         title="Editar"
+                        disabled={isLoading}
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -383,6 +481,7 @@ const Restaurants = () => {
                         onClick={() => handleDelete(restaurant.id)}
                         className="font-medium text-red-600 dark:text-red-500 hover:underline"
                         title="Eliminar"
+                        disabled={isLoading}
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -426,6 +525,7 @@ const Restaurants = () => {
                   type="button"
                   className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
                   onClick={closeModal}
+                  disabled={isLoading}
                 >
                   <svg
                     className="w-3 h-3"
@@ -465,6 +565,7 @@ const Restaurants = () => {
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     value={formik.values.name}
+                    disabled={isLoading}
                   />
                   {formik.touched.name && formik.errors.name ? (
                     <p className="mt-1 text-sm text-red-600">
@@ -486,6 +587,7 @@ const Restaurants = () => {
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     value={formik.values.address}
+                    disabled={isLoading}
                   />
                   {formik.touched.address && formik.errors.address ? (
                     <p className="mt-1 text-sm text-red-600">
@@ -509,6 +611,7 @@ const Restaurants = () => {
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     value={formik.values.phone}
+                    disabled={isLoading}
                   />
                   {formik.touched.phone && formik.errors.phone ? (
                     <p className="mt-1 text-sm text-red-600">
@@ -532,19 +635,20 @@ const Restaurants = () => {
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     value={formik.values.user}
+                    disabled={isLoading || !formik.values.isCreating}
                   />
                   {formik.touched.user && formik.errors.user ? (
                     <p className="mt-1 text-sm text-red-600">
                       {formik.errors.user}
                     </p>
                   ) : null}
-                </div>
+                </div> */
 
                 {/* Logo/Imagen */}
                 <div>
                   <label
                     htmlFor="restaurant_image"
-                    className="block  text-sm font-medium text-gray-900 dark:text-white"
+                    className="block text-sm font-medium text-gray-900 dark:text-white"
                   >
                     {formik.values.isCreating
                       ? "Logo (requerido)"
@@ -563,6 +667,7 @@ const Restaurants = () => {
                     }`}
                     onChange={handleImageChange}
                     onBlur={formik.handleBlur}
+                    disabled={isLoading}
                   />
                   {formik.touched.restaurant_image &&
                   formik.errors.restaurant_image ? (
@@ -601,6 +706,7 @@ const Restaurants = () => {
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     value={formik.values.description}
+                    disabled={isLoading}
                   />
                   {formik.touched.description && formik.errors.description ? (
                     <p className="mt-1 text-sm text-red-600">
@@ -613,7 +719,7 @@ const Restaurants = () => {
               <div className="flex items-center p-4 md:p-5 border-t border-gray-200 rounded-b dark:border-gray-600">
                 <button
                   type="submit"
-                  disabled={formik.isSubmitting}
+                  disabled={formik.isSubmitting || isLoading}
                   className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 disabled:opacity-50"
                 >
                   {isLoading ? (
