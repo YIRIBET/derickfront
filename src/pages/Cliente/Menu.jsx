@@ -1,41 +1,32 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import AxiosClient from "../../config/http-client/axios-client";
 
 const Menu = () => {
   const navigate = useNavigate();
   const { restaurantId } = useParams();
   const [menus, setMenus] = useState([]);
-  const [restaurants, setRestaurants] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedMenu, setSelectedMenu] = useState(null);
+  const [restaurant, setRestaurant] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
+    setLoading(true);
 
-    if (!token) {
-      setError("No hay token disponible");
-      setLoading(false);
-      return;
-    }
-
-    fetch(`http://localhost:8000/menus/findByRestaurant/${restaurantId}/`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    })
+    // Obtener info del restaurante
+    AxiosClient.get(`restaurante/api/${restaurantId}/`)
       .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        return response.json();
+        setRestaurant(response.data);
       })
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setMenus(data);
+      .catch((err) => {
+        setError("Error al obtener el restaurante: " + err.message);
+      });
+
+    // Obtener menús
+    AxiosClient.get(`menus/findByRestaurant/${restaurantId}/`)
+      .then((response) => {
+        if (Array.isArray(response.data)) {
+          setMenus(response.data);
         } else {
           throw new Error("Formato de datos inesperado");
         }
@@ -47,63 +38,13 @@ const Menu = () => {
       });
   }, [restaurantId]);
 
-  useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-
-    if (!token) {
-      setError("No hay token disponible");
-      setLoading(false);
-      return;
-    }
-
-    fetch("http://localhost:8000/restaurante/api/", {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        return response.json();
-      })
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setRestaurants(data);
-        } else {
-          throw new Error("Formato de datos inesperado");
-        }
-        setLoading(false);
-      })
-      .catch((err) => {
-        setError("Error al obtener los restaurantes: " + err.message);
-        setLoading(false);
-      });
-  }, []);
-
-  const openModal = (menu) => {
-    setSelectedMenu(menu);
-    setIsModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setSelectedMenu(null);
-  };
-
-  const selectedRestaurant = restaurants.find(
-    (r) => r.id === parseInt(restaurantId)
-  );
-
   if (loading) return <p>Cargando...</p>;
   if (error) return <p>{error}</p>;
 
   return (
     <div className="grid grid-cols-12 gap-2 p-4">
-      {/* Sidebar del restaurante */}
-      <div className="col-span-2 row-span-2 bg-white-500  text-gray">
+      {/* Sidebar del restaurante - Estilo original */}
+      <div className="col-span-2 row-span-2 bg-white-500 text-gray">
         <button
           onClick={() => navigate(-1)}
           className="bg-black hover:bg-black text-white mt-[-94px] font-semibold py-2 px-4 rounded shadow transition duration-300"
@@ -112,42 +53,42 @@ const Menu = () => {
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
-            stroke-width="1.5"
+            strokeWidth="1.5"
             stroke="currentColor"
-            class="size-6"
+            className="size-6"
           >
             <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
+              strokeLinecap="round"
+              strokeLinejoin="round"
               d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"
             />
           </svg>
         </button>
         <h2 className="text-lg font-bold text-center mb-2">Restaurante</h2>
-        {selectedRestaurant ? (
+        {restaurant ? (
           <div className="mb-4">
-            {selectedRestaurant.restaurant_image ? (
+            {restaurant.restaurant_image ? (
               <img
-                src={`data:${selectedRestaurant.restaurant_image.type};base64,${selectedRestaurant.restaurant_image.data}`}
-                alt={selectedRestaurant.name}
+                src={`data:${restaurant.restaurant_image.type};base64,${restaurant.restaurant_image.data}`}
+                alt={restaurant.name}
                 style={{ width: "200px", height: "auto" }}
               />
             ) : (
               <p>No hay imagen disponible.</p>
             )}
             <h3 className="text-xl font-bold text-center mt-2">
-              {selectedRestaurant.name}
+              {restaurant.name}
             </h3>
             <p className="text-center text-muted-foreground">
-              {selectedRestaurant.description}
+              {restaurant.description}
             </p>
             <p className="text-sm font-medium text-gray-900 text-center">
-              {selectedRestaurant.address}
+              {restaurant.address}
             </p>
 
-            <div className="flex items-center">
+            <div className="flex items-center justify-center mt-2">
               <svg
-                className="w-4 h-4 text-yellow-300 ms-1"
+                className="w-4 h-4 text-yellow-300"
                 aria-hidden="true"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="currentColor"
@@ -183,7 +124,7 @@ const Menu = () => {
                 <path d="M20.924 7.625a1.523 1.523 0 0 0-1.238-1.044l-5.051-.734-2.259-4.577a1.534 1.534 0 0 0-2.752 0L7.365 5.847l-5.051.734A1.535 1.535 0 0 0 1.463 9.2l3.656 3.563-.863 5.031a1.532 1.532 0 0 0 2.226 1.616L11 17.033l4.518 2.375a1.534 1.534 0 0 0 2.226-1.617l-.863-5.03L20.537 9.2a1.523 1.523 0 0 0 .387-1.575Z" />
               </svg>
               <svg
-                className="w-4 h-4 ms-1 text-gray-300 dark:text-gray-500"
+                className="w-4 h-4 ms-1 text-gray-300"
                 aria-hidden="true"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="currentColor"
@@ -198,8 +139,7 @@ const Menu = () => {
         )}
       </div>
 
-      {/* Menús */}
-
+      {/* Menús - Estilo original */}
       <div className="col-span-10 bg-white-500 p-4 text-white text-center grid grid-cols-2 gap-3 border-1">
         {menus.length > 0 ? (
           menus.map((menu) => (

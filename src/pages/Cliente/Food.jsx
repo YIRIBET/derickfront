@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import AxiosClient from "../../config/http-client/axios-client";
 
 const Food = () => {
   const navigate = useNavigate();
@@ -9,40 +10,26 @@ const Food = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
+    setLoading(true);
 
-    if (!token) {
-      setError("No hay token disponible");
+    AxiosClient.get(`food/findByMenu/${menuId}/`)
+    .then((response) => {
+      if (Array.isArray(response.data)) {
+        setFoods(response.data);
+      } else {
+        throw new Error("Formato de datos inesperado");
+      }
       setLoading(false);
-      return;
-    }
-
-    fetch(`http://localhost:8000/food/findByMenu/${menuId}/`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
     })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        return response.json();
-      })
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setFoods(data);
-        } else {
-          throw new Error("Formato de datos inesperado");
-        }
-        setLoading(false);
-      })
-      .catch((err) => {
-        setError("Error al obtener las comidas: " + err.message);
-        setLoading(false);
-      });
-  }, [menuId]);
+    .catch((err) => {
+      console.error("Error en la API:", err);
+      setError("Error al obtener las comidas: " + err.message);
+      setLoading(false);
+    });
+}, [menuId]);
+
+if (loading) return <p>Cargando alimentos...</p>;
+if (error) return <p>{error}</p>;
 // Cambia la función agregarAlCarrito:
 const agregarAlCarrito = (comida) => {
   const carritoActual = JSON.parse(localStorage.getItem("cart")) || []; // Usa "cart" (misma clave que el componente Cart)

@@ -87,14 +87,13 @@ const Cart = ({ onClose }) => {
   };
   const handleCheckout = () => {
     const token = localStorage.getItem("accessToken");
-  
+
     if (token) {
       navigate("/order");
     } else {
       navigate("/login");
     }
   };
-  
 
   return (
     <aside className="fixed top-16 right-0 w-80 h-screen bg-white shadow-lg p-6 overflow-y-auto">
@@ -104,13 +103,17 @@ const Cart = ({ onClose }) => {
         <div className="space-y-4">
           {cartItems.map((item) => (
             <div key={item.id} className="flex items-center gap-4 pb-4">
-              <img
-                src={item.image || "/placeholder.svg"}
-                alt={item.name}
-                width={50}
-                height={50}
-                className="rounded"
-              />
+              {item.image ? (
+                <img
+                  src={`data:${item.image.type};base64,${item.image.data}`}
+                  alt={item.name}
+                  className="w-20 h-15 object-cover"
+                />
+              ) : (
+                <div className="w-full h-48 flex items-center justify-center bg-gray-200 text-gray-500">
+                  Sin imagen
+                </div>
+              )}
               <div className="flex-1">
                 <h4 className="font-medium">{item.name}</h4>
                 <p className="text-sm text-[#f75518]">

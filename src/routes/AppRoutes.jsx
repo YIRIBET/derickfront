@@ -87,6 +87,11 @@ const AppRouter = () => {
         ) : (
           <>
             <Route index element={<Home />} />
+            
+            <Route path="Menu/:restaurantId" element={<Menu />} />
+          <Route path="food/:menuId" element={<Food />} />
+          <Route path="order/" element={<Orders />} />
+          <Route path="cart/" element={<Cart />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/request-password" element={<RequestReset />} />

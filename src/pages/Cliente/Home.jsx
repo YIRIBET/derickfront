@@ -112,9 +112,7 @@ const Home = () => {
                       ({restaurant.rating?.toFixed(1) || '0.0'})
                     </span>
                   </div>
-                  <p className="text-gray-600 text-sm truncate">
-                    {restaurant.address || 'Dirección no disponible'}
-                  </p>
+                 
                 </div>
               </div>
             ))}
