@@ -330,124 +330,155 @@ const Menu = () => {
 
       {/* Modal para formulario */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-            <h2 className="text-2xl font-semibold mb-4">{selectedMenu ? "Editar Menú" : "Agregar Menú"}</h2>
-            <form onSubmit={formik.handleSubmit}>
-              <div className="mb-4">
-                <label htmlFor="restaurants" className="block text-sm font-medium text-gray-700">Restaurante</label>
-                <select
-                  id="restaurants"
-                  name="restaurants"
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  value={formik.values.restaurants}
-                  className="mt-1 block w-full px-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                >
-                  <option value="">Seleccione un restaurante</option>
-                  {restaurants.map(restaurant => (
-                    <option key={restaurant.id} value={restaurant.id}>{restaurant.name}</option>
-                  ))}
-                </select>
-                {formik.touched.restaurants && formik.errors.restaurants ? (
-                  <p className="mt-1 text-sm text-red-600">{formik.errors.restaurants}</p>
-                ) : null}
-              </div>
-              <div className="mb-4">
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700">Nombre</label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  value={formik.values.name}
-                  className="mt-1 block w-full px-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-                {formik.touched.name && formik.errors.name ? (
-                  <p className="mt-1 text-sm text-red-600">{formik.errors.name}</p>
-                ) : null}
-              </div>
-              <div className="mb-4">
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700">Descripción</label>
-                <textarea
-                  id="description"
-                  name="description"
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  value={formik.values.description}
-                  className="mt-1 block w-full px-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-                {formik.touched.description && formik.errors.description ? (
-                  <p className="mt-1 text-sm text-red-600">{formik.errors.description}</p>
-                ) : null}
-              </div>
-              <div className="mb-4">
-                <label htmlFor="start_date" className="block text-sm font-medium text-gray-700">Fecha de Inicio</label>
-                <input
-                  type="date"
-                  id="start_date"
-                  name="start_date"
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  value={formik.values.start_date}
-                  className="mt-1 block w-full px-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-                {formik.touched.start_date && formik.errors.start_date ? (
-                  <p className="mt-1 text-sm text-red-600">{formik.errors.start_date}</p>
-                ) : null}
-              </div>
-              <div className="flex justify-end space-x-4">
-                <button 
-                  type="button" 
-                  onClick={closeModal} 
-                  className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg"
-                  disabled={isLoading}
-                >
-                  Cancelar
-                </button>
-                <button 
-                  type="submit" 
-                  className="bg-black text-white px-4 py-2 rounded-lg"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <span className="flex items-center">
-                      <svg
-                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      Procesando...
-                    </span>
-                  ) : (
-                    selectedMenu ? "Actualizar" : "Agregar"
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm">
+    <div className="relative w-full max-w-md max-h-[90vh]">
+      <div className="relative bg-white rounded-lg shadow-lg dark:bg-gray-800 overflow-hidden">
+        {/* Modal header */}
+        <div className="flex items-center justify-between p-5 border-b rounded-t dark:border-gray-700">
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+            {selectedMenu ? "Editar Menú" : "Agregar Menú"}
+          </h3>
+          <button
+            onClick={closeModal}
+            type="button"
+            className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-700 dark:hover:text-white"
+            disabled={isLoading}
+          >
+            <svg className="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+              <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+            </svg>
+            <span className="sr-only">Cerrar modal</span>
+          </button>
         </div>
-      )}
+        
+        {/* Modal body - con scroll */}
+        <div className="p-6 space-y-4 overflow-y-auto max-h-[calc(90vh-120px)]">
+          <form onSubmit={formik.handleSubmit}>
+            <div className="mb-4">
+              <label htmlFor="restaurants" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Restaurante*</label>
+              <select
+                id="restaurants"
+                name="restaurants"
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                value={formik.values.restaurants}
+                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                required
+                disabled={isLoading}
+              >
+                <option value="">Seleccione un restaurante</option>
+                {restaurants.map(restaurant => (
+                  <option key={restaurant.id} value={restaurant.id}>{restaurant.name}</option>
+                ))}
+              </select>
+              {formik.touched.restaurants && formik.errors.restaurants ? (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-500">{formik.errors.restaurants}</p>
+              ) : null}
+            </div>
+
+            <div className="mb-4">
+              <label htmlFor="name" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Nombre*</label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                value={formik.values.name}
+                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                required
+                disabled={isLoading}
+              />
+              {formik.touched.name && formik.errors.name ? (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-500">{formik.errors.name}</p>
+              ) : null}
+            </div>
+
+            <div className="mb-4">
+              <label htmlFor="description" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Descripción*</label>
+              <textarea
+                id="description"
+                name="description"
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                value={formik.values.description}
+                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                required
+                disabled={isLoading}
+              />
+              {formik.touched.description && formik.errors.description ? (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-500">{formik.errors.description}</p>
+              ) : null}
+            </div>
+
+            <div className="mb-6">
+              <label htmlFor="start_date" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Fecha de Inicio*</label>
+              <input
+                type="date"
+                id="start_date"
+                name="start_date"
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                value={formik.values.start_date}
+                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                required
+                disabled={isLoading}
+              />
+              {formik.touched.start_date && formik.errors.start_date ? (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-500">{formik.errors.start_date}</p>
+              ) : null}
+            </div>
+
+            {/* Modal footer */}
+            <div className="flex items-center justify-end p-6 space-x-3 border-t border-gray-200 rounded-b dark:border-gray-700">
+              <button 
+                type="button" 
+                onClick={closeModal} 
+                className="text-gray-500 bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 focus:z-10 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-600"
+                disabled={isLoading}
+              >
+                Cancelar
+              </button>
+              <button 
+                type="submit" 
+                className="text-white bg-[#ff6227] hover:bg-[#ff8d62] focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <span className="flex items-center justify-center">
+                    <svg
+                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Procesando...
+                  </span>
+                ) : (
+                  selectedMenu ? "Actualizar" : "Agregar"
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 };

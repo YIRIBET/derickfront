@@ -16,7 +16,7 @@ const restaurantLayout = ({ children }) => {
       <div className='container p-5 pt-[100px] sm:pt-[120px] md:pt-[140px] max-w-full' style={{ flex: 1 } }>
         <Outlet />
       </div>
-      <Footer /> {/* El Footer se incluye al final */}
+     
     </div>
   );
 };

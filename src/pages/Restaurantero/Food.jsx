@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
 import Swal from "sweetalert2";
-import AxiosClient from "../../config/http-client/axios-client"; // Asegúrate de importar tu cliente Axios
+import AxiosClient from "../../config/http-client/axios-client";
 
 const Food = () => {
-  
   const API_URL = "food/api/";
   const MENUS_URL = "menus/api/";
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -47,8 +46,7 @@ const Food = () => {
       } catch (error) {
         console.error("Error fetching data:", error);
         setErrors({
-          fetchError:
-            "Error al cargar los datos. Por favor intenta nuevamente.",
+          fetchError: "Error al cargar los datos. Por favor intenta nuevamente.",
         });
         Swal.fire("Error", "Error al cargar los datos", "error");
       } finally {
@@ -61,15 +59,31 @@ const Food = () => {
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.name) newErrors.name = "Nombre es requerido";
-    if (!formData.description)
-      newErrors.description = "Descripción es requerida";
-    if (!formData.price || isNaN(formData.price))
-      newErrors.price = "Precio válido es requerido";
-    if (!formData.stock || isNaN(formData.stock))
-      newErrors.stock = "Stock válido es requerido";
-    if (!formData.menu) newErrors.menu = "Debes seleccionar un menú";
-
+    
+    if (!formData.menu) newErrors.menu = "Menú es requerido";
+    
+    if (!formData.name || formData.name.trim().length < 2) {
+      newErrors.name = "Nombre debe tener al menos 2 caracteres";
+    }
+    
+    if (!formData.description || formData.description.trim().length < 10) {
+      newErrors.description = "Descripción debe tener al menos 10 caracteres";
+    }
+    
+    const price = parseFloat(formData.price);
+    if (isNaN(price)) {
+      newErrors.price = "Precio debe ser un número";
+    } else if (price <= 0) {
+      newErrors.price = "Precio debe ser mayor que 0";
+    }
+    
+    const stock = parseInt(formData.stock);
+    if (isNaN(stock)) {
+      newErrors.stock = "Stock debe ser un número entero";
+    } else if (stock < 0) {
+      newErrors.stock = "Stock no puede ser negativo";
+    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -81,12 +95,10 @@ const Food = () => {
         menu: food.menu,
         name: food.name,
         description: food.description,
-        price: food.price,
-        stock: food.stock,
+        price: food.price.toString(),
+        stock: food.stock.toString(),
         image: null,
-        start_date:
-          food.start_date?.split("T")[0] ||
-          new Date().toISOString().split("T")[0],
+        start_date: food.start_date?.split("T")[0] || new Date().toISOString().split("T")[0],
         existingImage: food.image,
       });
     } else {
@@ -120,60 +132,117 @@ const Food = () => {
     }
   };
 
+  const renderImagePreview = () => {
+    if (formData.image instanceof File) {
+      return (
+        <img
+          src={URL.createObjectURL(formData.image)}
+          alt="Previsualización de nueva imagen"
+          className="w-full h-full object-cover"
+        />
+      );
+    }
+    
+    if (selectedFood?.image?.data) {
+      return (
+        <img
+          src={`data:${selectedFood.image.type || 'image/jpeg'};base64,${selectedFood.image.data}`}
+          alt={`Imagen de ${selectedFood.name}`}
+          className="w-full h-full object-cover"
+        />
+      );
+    }
+    
+    return (
+      <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+        <p className="text-gray-500">No hay imagen disponible</p>
+      </div>
+    );
+  };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validateForm()) return;
+  
+    try {
+      const method = selectedFood ? "patch" : "post";
+      const url = selectedFood ? `${API_URL}${selectedFood.id}/` : API_URL;
+  
+      // 1. Preparar los datos básicos
+      const requestData = {
+        menu: formData.menu,
+        name: formData.name,
+        description: formData.description,
+        price: parseFloat(formData.price),
+        stock: parseInt(formData.stock),
+        start_date: formData.start_date
+      };
+  
+      // 2. Manejo especial para la imagen
+      if (formData.image instanceof File) {
+        // Caso 1: Hay una nueva imagen seleccionada
+        const imageBase64 = await convertFileToBase64(formData.image);
+        requestData.image = {
+          name: formData.image.name,
+          type: formData.image.type,
+          image_base64: imageBase64
+        };
+      } else if (selectedFood?.image) {
+        // Caso 2: Estamos editando y no se cambió la imagen
+        // Enviamos solo la referencia a la imagen existente
+        requestData.image_id = selectedFood.image.id;
+      }
+      // Caso 3: No hay imagen (creación sin imagen) - no hacemos nada
+  
+      // 3. Enviar la solicitud
+      const response = await AxiosClient[method](url, requestData);
+  
+      // 4. Actualizar el estado
+      const updatedResponse = await AxiosClient.get(API_URL);
+      setFoods(updatedResponse.data);
+  
+      // 5. Cerrar modal y mostrar confirmación
+      closeModal();
+      Swal.fire({
+        icon: 'success',
+        title: selectedFood ? '¡Comida actualizada!' : '¡Comida creada!',
+        text: selectedFood ? 'Los cambios se guardaron correctamente' : 'Nueva comida añadida al menú',
+        showConfirmButton: false,
+        timer: 1500
+      });
+  
+    } catch (error) {
+      console.error("Error al guardar:", error.response?.data || error);
+      
+      // Manejo de errores mejorado
+      let errorMessage = "Error al procesar la solicitud";
+      if (error.response?.data) {
+        if (error.response.data.image) {
+          errorMessage = `Error en la imagen: ${Array.isArray(error.response.data.image) 
+            ? error.response.data.image.join(', ') 
+            : error.response.data.image}`;
+        } else if (error.response.data.detail) {
+          errorMessage = error.response.data.detail;
+        }
+      }
+  
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: errorMessage,
+        confirmButtonColor: '#3085d6',
+      });
+    }
+  };
+  
+  // Función para convertir imagen a base64
   const convertFileToBase64 = (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result.split(",")[1]);
-      reader.onerror = (error) => reject(error);
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = error => reject(error);
     });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validateForm()) return;
-
-    try {
-      const method = selectedFood ? "patch" : "post";
-      const url = selectedFood ? `${API_URL}${selectedFood.id}/` : API_URL;
-
-      const data = new FormData();
-      data.append("menu", formData.menu);
-      data.append("name", formData.name);
-      data.append("description", formData.description);
-      data.append("price", formData.price);
-      data.append("stock", formData.stock);
-      data.append("start_date", formData.start_date);
-
-      if (formData.image) {
-        data.append("image", formData.image);
-      }
-
-      const response = await AxiosClient[method](url, data, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
-      // Actualizar la lista de comidas
-      const updatedResponse = await AxiosClient.get(API_URL);
-      setFoods(updatedResponse.data);
-
-      closeModal();
-      Swal.fire({
-        icon: "success",
-        title: selectedFood ? "Comida actualizada" : "Comida creada",
-        timer: 1500,
-        showConfirmButton: false,
-      });
-    } catch (error) {
-      console.error("Error saving food:", error);
-      Swal.fire(
-        "Error",
-        error.response?.data?.message || error.message,
-        "error"
-      );
-    }
   };
 
   const handleDelete = async (id) => {
@@ -283,9 +352,7 @@ const Food = () => {
                     <th scope="col" className="px-6 py-3">
                       Imagen
                     </th>
-                    <th scope="col" className="px-6 py-3">
-                      Fecha Inicio
-                    </th>
+                   
                     <th scope="col" className="px-6 py-3">
                       Acciones
                     </th>
@@ -309,11 +376,11 @@ const Food = () => {
                         <td className="px-6 py-4">${food.price}</td>
                         <td className="px-6 py-4">{food.stock}</td>
                         <td className="px-6 py-4">
-                          {food.image ? (
+                          {food.image?.data ? (
                             <img
-                              src={`data:${food.image.type};base64,${food.image.data}`}
+                              src={`data:${food.image.type || 'image/jpeg'};base64,${food.image.data}`}
                               alt={food.name}
-                              className="w-full h-full object-cover"
+                              className="w-20 h-15 object-cover"
                             />
                           ) : (
                             <div className="w-full h-full bg-gray-200 flex items-center justify-center">
@@ -323,10 +390,8 @@ const Food = () => {
                             </div>
                           )}
                         </td>
-                        <td className="px-6 py-4">
-                          {new Date(food.start_date).toLocaleDateString()}
-                        </td>
-                        <td className="px-6 py-4 text-right">
+                       
+                        <td className="px-4 py-4 text-right">
                           <button
                             onClick={() => openModal(food)}
                             className="font-medium text-blue-600 hover:underline mr-3"
@@ -380,181 +445,158 @@ const Food = () => {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-semibold">
-                {selectedFood ? "Editar Comida" : "Agregar Comida"}
-              </h2>
-              <button
-                onClick={closeModal}
-                className="text-gray-500 hover:text-gray-700"
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm">
+    <div className="relative w-full max-w-md max-h-[90vh]">
+      <div className="relative bg-white rounded-lg shadow dark:bg-gray-800 overflow-hidden">
+        {/* Modal header */}
+        <div className="flex items-center justify-between p-5 border-b rounded-t dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+            {selectedFood ? "Editar Comida" : "Agregar Comida"}
+          </h3>
+          <button
+            onClick={closeModal}
+            type="button"
+            className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-700 dark:hover:text-white"
+          >
+            <svg className="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+              <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+            </svg>
+            <span className="sr-only">Cerrar modal</span>
+          </button>
+        </div>
+        
+        {/* Modal body - con scroll */}
+        <div className="p-6 space-y-4 overflow-y-auto max-h-[calc(90vh-120px)]">
+          <form onSubmit={handleSubmit}>
+            <div className="mb-4">
+              <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Menú*</label>
+              <select
+                name="menu"
+                value={formData.menu}
+                onChange={handleInputChange}
+                className={`bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white ${
+                  errors.menu ? "border-red-500 dark:border-red-500" : ""
+                }`}
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
+                <option value="">Selecciona un menú</option>
+                {menus.map((menu) => (
+                  <option key={menu.id} value={menu.id}>
+                    {menu.name}
+                  </option>
+                ))}
+              </select>
+              {errors.menu && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-500">{errors.menu}</p>
+              )}
             </div>
 
-            <form onSubmit={handleSubmit}>
-              <div className="mb-4">
-                <label className="block mb-1 font-semibold">Menú*</label>
-                <select
-                  name="menu"
-                  value={formData.menu}
-                  onChange={handleInputChange}
-                  className={`w-full border rounded px-3 py-2 ${
-                    errors.menu ? "border-red-500" : ""
-                  }`}
-                >
-                  <option value="">Selecciona un menú</option>
-                  {menus.map((menu) => (
-                    <option key={menu.id} value={menu.id}>
-                      {menu.name}
-                    </option>
-                  ))}
-                </select>
-                {errors.menu && (
-                  <p className="text-red-500 text-sm mt-1">{errors.menu}</p>
-                )}
-              </div>
+            <div className="mb-4">
+              <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Nombre*</label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                className={`bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white ${
+                  errors.name ? "border-red-500 dark:border-red-500" : ""
+                }`}
+              />
+              {errors.name && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-500">{errors.name}</p>
+              )}
+            </div>
 
-              <div className="mb-4">
-                <label className="block mb-1 font-semibold">Nombre*</label>
+            <div className="mb-4">
+              <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Descripción*</label>
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                rows="3"
+                className={`bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white ${
+                  errors.description ? "border-red-500 dark:border-red-500" : ""
+                }`}
+              />
+              {errors.description && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-500">{errors.description}</p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Precio*</label>
                 <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
+                  type="number"
+                  name="price"
+                  value={formData.price}
                   onChange={handleInputChange}
-                  className={`w-full border rounded px-3 py-2 ${
-                    errors.name ? "border-red-500" : ""
-                  }`}
-                />
-                {errors.name && (
-                  <p className="text-red-500 text-sm mt-1">{errors.name}</p>
-                )}
-              </div>
-
-              <div className="mb-4">
-                <label className="block mb-1 font-semibold">Descripción*</label>
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  rows="3"
-                  className={`w-full border rounded px-3 py-2 ${
-                    errors.description ? "border-red-500" : ""
+                  step="0.01"
+                  className={`bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white ${
+                    errors.price ? "border-red-500 dark:border-red-500" : ""
                   }`}
                 />
-                {errors.description && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.description}
-                  </p>
+                {errors.price && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-500">{errors.price}</p>
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block mb-1 font-semibold">Precio*</label>
-                  <input
-                    type="number"
-                    name="price"
-                    value={formData.price}
-                    onChange={handleInputChange}
-                    step="0.01"
-                    className={`w-full border rounded px-3 py-2 ${
-                      errors.price ? "border-red-500" : ""
-                    }`}
-                  />
-                  {errors.price && (
-                    <p className="text-red-500 text-sm mt-1">{errors.price}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block mb-1 font-semibold">Stock*</label>
-                  <input
-                    type="number"
-                    name="stock"
-                    value={formData.stock}
-                    onChange={handleInputChange}
-                    className={`w-full border rounded px-3 py-2 ${
-                      errors.stock ? "border-red-500" : ""
-                    }`}
-                  />
-                  {errors.stock && (
-                    <p className="text-red-500 text-sm mt-1">{errors.stock}</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <label className="block mb-1 font-semibold">
-                  Imagen {selectedFood && "(opcional)"}
-                </label>
+              <div>
+                <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Stock*</label>
                 <input
-                  type="file"
-                  name="image"
+                  type="number"
+                  name="stock"
+                  value={formData.stock}
                   onChange={handleInputChange}
-                  accept="image/*"
-                  className="w-full border rounded px-3 py-2"
+                  className={`bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white ${
+                    errors.stock ? "border-red-500 dark:border-red-500" : ""
+                  }`}
                 />
-                {selectedFood.image ? (
-                  <img
-                    src={`data:${selectedFood.image.type};base64,${selectedFood.image.data}`}
-                    alt={selectedFood.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                    <p className="text-gray-500">No hay imagen disponible</p>
-                  </div>
+                {errors.stock && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-500">{errors.stock}</p>
                 )}
               </div>
+            </div>
 
-              <div className="mb-4">
-                <label className="block mb-1 font-semibold">
-                  Fecha de Inicio
-                </label>
-                <input
-                  type="date"
-                  name="start_date"
-                  value={formData.start_date}
-                  onChange={handleInputChange}
-                  className="w-full border rounded px-3 py-2"
-                />
+            <div className="mb-4">
+              <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                Imagen {selectedFood && "(opcional)"}
+              </label>
+              <input
+                type="file"
+                name="image"
+                onChange={handleInputChange}
+                accept="image/*"
+                className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
+              />
+              <div className="mt-2 w-full h-40 border border-gray-300 rounded-lg overflow-hidden">
+                {renderImagePreview()}
               </div>
+            </div>
 
-              <div className="flex justify-end gap-2 mt-6">
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
-                >
-                  {selectedFood ? "Actualizar" : "Guardar"}
-                </button>
-              </div>
-            </form>
-          </div>
+            
+
+            {/* Modal footer */}
+            <div className="flex items-center justify-end p-6 space-x-3 border-t border-gray-200 rounded-b dark:border-gray-700">
+              <button
+                type="button"
+                onClick={closeModal}
+                className="text-gray-500 bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 focus:z-10 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-600"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="text-white bg-[#ff6227] hover:bg-[#ff8d62] focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+              >
+                {selectedFood ? "Actualizar" : "Guardar"}
+              </button>
+            </div>
+          </form>
         </div>
-      )}
+      </div>
+    </div>
+  </div>
+)}
     </>
   );
 };
