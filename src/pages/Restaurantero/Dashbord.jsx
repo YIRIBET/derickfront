@@ -131,7 +131,7 @@ const Dashboard = () => {
           <div className="flex items-center justify-center h-24 rounded bg-white dark:bg-gray-800">
             <div>
               <p className="font-semibold">Ticket promedio</p>
-              <h2 className="font-bold text-[23px] text-[#f75518]">${avgTicket}</h2>
+              <h2 className="font-bold text-[23px] ">${avgTicket}</h2>
             </div>
           </div>
         </div>
@@ -141,12 +141,14 @@ const Dashboard = () => {
         <div className="flex items-center justify-center h-24 rounded bg-white dark:bg-gray-800">
           <div>
           <p className="font-semibold">Ventas hoy</p>
-          <h2 className="font-bold text-[23px]">${todaySales.toFixed(2)}</h2>
+          <h2 className="font-bold text-[23px] text-[#f75518]">${todaySales.toFixed(2)}</h2>
           </div>
           </div>
-          <div className="rounded h-28 border border-gray-200 dark:border-gray-600 p-4">
+          <div className="flex items-center justify-center h-24 rounded bg-white dark:bg-gray-800">
+            <div>
             <p className="font-semibold">Órdenes hoy</p>
-            <h2 className="font-bold text-[23px]">{todayOrders}</h2>
+            <h2 className="font-bold text-[23px] text-[#f75518]">{todayOrders}</h2>
+            </div>
           </div>
         </div>
 
