@@ -13,8 +13,7 @@ const Register = () => {
     initialValues: {
       name: '',
       email: '',
-      password: '',
-      start_date: '',
+      password: ''
     },
     validationSchema: Yup.object({
       name: Yup.string()
@@ -29,8 +28,7 @@ const Register = () => {
           'La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un símbolo'
         )
         .required('La contraseña es obligatoria'),
-      start_date: Yup.date()
-        .required('La fecha de inicio es obligatoria'),
+      
     }),    
     onSubmit: async (values) => {
       setIsLoading(true);
@@ -170,7 +168,7 @@ const Register = () => {
                 )}
               </div>
 
-              {/* Fecha de inicio */}
+              {/* Fecha de inicio 
               <div>
                 <label className="block text-sm font-medium text-gray-900">Fecha de inicio</label>
                 <input
@@ -184,7 +182,7 @@ const Register = () => {
                 {formik.touched.start_date && formik.errors.start_date && (
                   <p className="text-sm text-red-600 mt-1">{formik.errors.start_date}</p>
                 )}
-              </div>
+              </div>*/}
             </div>
 
             <button

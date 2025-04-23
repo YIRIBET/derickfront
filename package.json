@@ -20,6 +20,7 @@
     "react": "^19.0.0",
     "react-chartjs-2": "^5.3.0",
     "react-dom": "^19.0.0",
+    "react-rating-stars-component": "^2.2.0",
     "react-router-dom": "^7.2.0",
     "sweetalert2": "^11.17.2",
     "yup": "^1.6.1"

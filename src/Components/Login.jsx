@@ -41,7 +41,8 @@ const Login = () => {
       const session = JSON.parse(localStorage.getItem('user'));
       console.log(session.access);
       console.log(data.role);
-      
+        const userId = localStorage.getItem("userId");
+      console.log("user_id:", userId);
       
       window.location.reload();
       setTimeout(() => {

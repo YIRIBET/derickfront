@@ -32,6 +32,7 @@ import PublicLayout from '../layout/PublicLayout'
 const AppRouter = () => {
   const { user } = useContext(AuthContext);
   console.log(user?.role)
+  console.log(user?.user_id);
   const isUserSignedIn = user?.signed;
 
   const routesFromRole = (role) => {
