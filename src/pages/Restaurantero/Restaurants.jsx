@@ -442,14 +442,14 @@ const Restaurants = () => {
       {/* Modal para formulario */}
       {isModalOpen && (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm overflow-y-auto py-4">
-    <div className="relative p-4 w-full max-w-md max-h-full"> {/* Cambiado a max-w-md */}
+    <div className="relative p-4 w-full max-w-md max-h-full"> 
       <form
         onSubmit={formik.handleSubmit}
         className="relative bg-white rounded-lg shadow dark:bg-gray-700"
       >
         {/* Modal Header */}
         <div className="flex items-center justify-between p-4 border-b rounded-t dark:border-gray-600">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white"> {/* Texto más pequeño */}
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white"> 
             {formik.values.isCreating
               ? "Agregar Restaurante"
               : "Editar Restaurante"}
