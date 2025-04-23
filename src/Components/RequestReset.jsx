@@ -1,7 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import React from "react";
-import Fondo from "../assets/fondo.jpg";
+const SERVER_URL = import.meta.env.VITE_APP_SERVER_URL;
 
 function RequestReset() {
   const [email, setEmail] = useState("");
@@ -11,9 +11,11 @@ function RequestReset() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+
+
     try {
       await axios.post(
-        "http://localhost:8000/users/api/password-reset/request/",
+        `${SERVER_URL}users/api/password-reset/request/`,
         {
           email,
           redirect_url: `${window.location.origin}/reset-password`,

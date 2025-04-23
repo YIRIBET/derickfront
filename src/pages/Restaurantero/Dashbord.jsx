@@ -9,6 +9,9 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+
+const SERVER_URL = import.meta.env.VITE_APP_SERVER_URL;
+
 import { Bar } from "react-chartjs-2";
 
 ChartJS.register(
@@ -30,7 +33,7 @@ const Dashboard = () => {
     const fetchSales = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:8000/sales/restaurantSales/${restaurantId}/`
+          `${SERVER_URL}sales/restaurantSales/${restaurantId}/`
         );
         const data = response.data;
         setSales(data);

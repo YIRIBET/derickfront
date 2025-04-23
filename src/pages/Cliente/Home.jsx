@@ -2,7 +2,6 @@ import React, { useState, useEffect, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../../Components/Navbar";
 import Cart from "../../Components/Cart";
-import Swal from "sweetalert2";
 import AuthContext from '../../config/context/auth-context';
 import AxiosClient from "../../config/http-client/axios-client";
 

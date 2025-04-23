@@ -1,8 +1,26 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import Pythones from "../assets/pythonEsLogo.png";
+import React, { useState, useEffect, } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Sidebar = () => {
+  const [redirectToHome, setRedirectToHome] = useState(false);
+  const nav = useNavigate();
+
+
+  const logout = () => {
+    dispatch({ type: 'SIGNOUT', signed: false });
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+
+
+    setRedirectToHome(true);
+  };
+
+  useEffect(() => {
+    if (redirectToHome) nav("/");
+  }, [redirectToHome, nav]);
+
+
+
   return (
     <>
       <aside
@@ -130,7 +148,7 @@ const Sidebar = () => {
                   />
                 </svg>
 
-                <span class="flex-1 ms-3 whitespace-nowrap">Cerrar sesión</span>
+                <span onClick={logout} class="flex-1 ms-3 whitespace-nowrap">Cerrar sesión</span>
               </a>
             </li>
           </ul>

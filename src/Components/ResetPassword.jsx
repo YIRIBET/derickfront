@@ -2,6 +2,7 @@ import { useState } from "react";
 import axios from "axios";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import React from "react";
+const SERVER_URL = import.meta.env.VITE_APP_SERVER_URL;
 
 function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -26,7 +27,7 @@ function ResetPassword() {
     setIsLoading(true);
     try {
       await axios.post(
-        "http://localhost:8000/users/api/password-reset/confirm/",
+        `${SERVER_URL}users/api/password-reset/confirm/`,
         {
           uid,
           token,

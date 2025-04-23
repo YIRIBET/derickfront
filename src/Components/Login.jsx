@@ -1,7 +1,9 @@
 import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from "react-router-dom";
+import AuthContext from './../config/context/auth-context';
 import Swal from 'sweetalert2';
-import AuthContext from './../config/context/auth-context'; // Importamos el contexto
+
+const SERVER_URL = import.meta.env.VITE_APP_SERVER_URL;
 
 const Login = () => {
   const { dispatch } = useContext(AuthContext);
@@ -11,12 +13,22 @@ const Login = () => {
   const nav = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
 
-
   const handleLogin = async (e) => {
     e.preventDefault();
-
+    setError('');
+  
+    // Mostrar alerta de carga
+    Swal.fire({
+      title: 'Iniciando sesión...',
+      text: 'Por favor espera',
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+  
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/auth/token/", {
+      const response = await fetch(`${SERVER_URL}api/auth/token/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -26,37 +38,43 @@ const Login = () => {
           password: password,
         }),
       });
-
+  
       if (!response.ok) {
         throw new Error("Usuario o contraseña incorrectos");
       }
-
-      const data = await response.json();     
-      console.log("Respuesta del servidor:", data);
-     // Guardamos el token y los datos del usuario
-     localStorage.setItem("accessToken", data.access);
-     localStorage.setItem("refreshToken", data.refresh);
-     dispatch({ type: "SIGNIN", payload: { ...data, signed: true } });
-
+  
+      const data = await response.json();
+      localStorage.setItem("accessToken", data.access);
+      localStorage.setItem("refreshToken", data.refresh);
+      dispatch({ type: "SIGNIN", payload: { ...data, signed: true } });
+    
       const session = JSON.parse(localStorage.getItem('user'));
       console.log(session.access);
       console.log(data.role);
         const userId = localStorage.getItem("userId");
       console.log("user_id:", userId);
-      
+
       window.location.reload();
       setTimeout(() => {
         nav("/");
-      }, 50); 
+      }, 1); 
 
-
-
-
+      Swal.close(); 
+  
     } catch (error) {
       console.error("Error en el login:", error);
-      setError(error.message); // Actualiza el estado de error para mostrarlo en pantalla
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: error.message,
+      });
     }
   };
+  
+
+
+
+
 
   return (
     <div className="flex min-h-screen w-full flex-col md:flex-row">
@@ -137,7 +155,7 @@ const Login = () => {
                   </button>
                 </div>
               </div>
-              </div>
+            </div>
 
             <div className="flex items-center justify-center">
               <div className="text-sm">

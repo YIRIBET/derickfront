@@ -1,8 +1,8 @@
 import axios from 'axios'
+const SERVER_URL = import.meta.env.VITE_APP_SERVER_URL;
 
-const API_URL = 'http://localhost:8000/api/auth/token/'
 export const login = async (email, password) =>{
-    const response = await axios.post(API_URL,{email, password});
+    const response = await axios.post(SERVER_URL,{email, password});
     if (response.data.access){
         localStorage.setItem('accessToken',response.data.access);
         localStorage.setItem('refeshToken',response.data.refresh);
@@ -18,5 +18,3 @@ export const logout =() =>{
 
 }
 
-//TO do 
-//crear un metodo que jale informacion del usuario para fines de react 

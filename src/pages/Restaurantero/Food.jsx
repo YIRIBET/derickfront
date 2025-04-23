@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import Swal from "sweetalert2";
 import AxiosClient from "../../config/http-client/axios-client";
 
 const Food = () => {

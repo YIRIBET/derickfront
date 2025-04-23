@@ -41,7 +41,7 @@ const Register = () => {
       };
 
       try {
-        const response = await fetch('http://127.0.0.1:8000/users/api/user/save/', {
+        const response = await fetch('https://restaurante-xyf1.onrender.com/users/api/user/save/', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

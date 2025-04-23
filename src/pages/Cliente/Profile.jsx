@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import axiosClient from "../../config/http-client/axios-client";
-import Restaurants from "../Restaurantero/Restaurants";
 
 const Profile = () => {
   const [user, setUser] = useState(null);
