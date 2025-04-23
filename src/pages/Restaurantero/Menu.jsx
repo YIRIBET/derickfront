@@ -6,8 +6,6 @@ import AuthContext from '../../config/context/auth-context';
 import AxiosClient from "../../config/http-client/axios-client";
 
 const Menu = () => {
-  const API_URL = "menus/api/";
-  const RESTAURANTS_URL = "restaurante/api/";
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedMenu, setSelectedMenu] = useState(null);
   const [menus, setMenus] = useState([]);
@@ -15,6 +13,8 @@ const Menu = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useContext(AuthContext);
   const isUserSignedIn = user?.signed || false;
+  const userId = localStorage.getItem("userId");
+  const API_URL = "menus/api/";
 
   // Esquema de validación con Yup
   const menuSchema = Yup.object().shape({
@@ -25,7 +25,7 @@ const Menu = () => {
       }),
     name: Yup.string()
       .min(3, "Mínimo 3 caracteres")
-      .max(50, "Máximo 50 caracteres")
+      .max(20, "Máximo 50 caracteres")
       .required("Nombre es requerido"),
     description: Yup.string()
       .min(10, "Mínimo 10 caracteres")
@@ -38,7 +38,7 @@ const Menu = () => {
   // Obtener restaurantes disponibles
   const fetchRestaurants = async () => {
     try {
-      const response = await AxiosClient.get(RESTAURANTS_URL);
+      const response = await AxiosClient.get(`restaurante/findByUser/${userId}`);
       setRestaurants(response.data);
     } catch (error) {
       console.error("Error fetching restaurants:", error);
@@ -50,7 +50,8 @@ const Menu = () => {
   const fetchMenus = async () => {
     setIsLoading(true);
     try {
-      const response = await AxiosClient.get(API_URL);
+ 
+      const response = await AxiosClient.get(`menus/users/${userId}/menus/`);
       setMenus(response.data);
     } catch (error) {
       console.error("Error fetching menus:", error);

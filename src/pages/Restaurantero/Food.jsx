@@ -10,6 +10,8 @@ const Food = () => {
   const [menus, setMenus] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errors, setErrors] = useState({});
+  const userId = localStorage.getItem("userId");
+
   const [formData, setFormData] = useState({
     menu: "",
     name: "",
@@ -28,7 +30,7 @@ const Food = () => {
 
       try {
         // Obtener menús
-        const menusResponse = await AxiosClient.get(MENUS_URL);
+        const menusResponse = await AxiosClient.get(`menus/users/${userId}/menus/`);
         if (Array.isArray(menusResponse.data)) {
           setMenus(menusResponse.data);
         } else {

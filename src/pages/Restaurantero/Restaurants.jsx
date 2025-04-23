@@ -9,7 +9,7 @@ import Swal from 'sweetalert2';
 const restaurantSchema = Yup.object().shape({
   name: Yup.string()
     .min(3, "Mínimo 3 caracteres")
-    .max(50, "Máximo 50 caracteres")
+    .max(20, "Máximo 50 caracteres")
     .required("Nombre es requerido"),
   address: Yup.string()
     .min(10, "Mínimo 10 caracteres")
@@ -44,6 +44,7 @@ const Restaurants = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const { user } = useContext(AuthContext);
   const isUserSignedIn = user?.signed || false;
+  const userId = localStorage.getItem("userId");
 
   
  
@@ -194,9 +195,10 @@ const Restaurants = () => {
   // Obtener restaurantes
   const fetchRestaurants = async () => {
     setIsLoading(true);
+    localStorage
     try {
       const response = await AxiosClient({
-        url: "restaurante/api/",
+        url: `restaurante/findByUser/${userId}`,
         method: 'GET',
       });
 
