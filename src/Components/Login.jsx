@@ -46,7 +46,7 @@ const Login = () => {
       const data = await response.json();
       localStorage.setItem("accessToken", data.access);
       localStorage.setItem("refreshToken", data.refresh);
-      localStorage.setItem("userId", data.user_id);
+      localStorage.setItem("userId", data.user_id); 
       dispatch({ type: "SIGNIN", payload: { ...data, signed: true } });
     
       const session = JSON.parse(localStorage.getItem('user'));

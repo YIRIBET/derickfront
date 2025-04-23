@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState,useContext } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import AxiosClient from "../../config/http-client/axios-client";
 import Swal from "sweetalert2";
+import Navbar from "../../Components/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
+import AuthContext from '../../config/context/auth-context';
 
 const Food = () => {
   const navigate = useNavigate();
@@ -12,6 +14,11 @@ const Food = () => {
   const [error, setError] = useState(null);
   const [cantidades, setCantidades] = useState({});
   const [isExiting, setIsExiting] = useState(false);
+  const { user } = useContext(AuthContext) || {};
+  const isUserSignedIn = user?.signed || false;
+  const [showCart, setShowCart] = useState(false);
+ 
+
 
   useEffect(() => {
     setLoading(true);
@@ -94,13 +101,15 @@ const Food = () => {
 
   return (
     <AnimatePresence mode="wait">
+    <div className="mb-90 relative min-h-screen">
+      <Navbar onCartClick={() => setShowCart(!showCart)} />
       {!isExiting && (
         <motion.div
           key="menu"
           initial={{ x: 0, opacity: 1 }}
           exit={{ x: -300, opacity: 0 }}
           transition={{ duration: 0.5 }}
-          className="p-4 w-full"
+          className={`grid-cols-12 gap-2 p-4 ${!isUserSignedIn ? 'mt-20' : ''}`}
         >
           <div className="col-span-2 mb-4 text-left">
             <button
@@ -180,6 +189,7 @@ const Food = () => {
           </div>
         </motion.div>
       )}
+        </div>
     </AnimatePresence>
   );
 };
