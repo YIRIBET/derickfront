@@ -81,7 +81,7 @@ const Orders = () => {
 
         Swal.fire({
           title: "¡Compra realizada!",
-          text: "Tu pedido se ha procesado correctamente 🎉",
+          text: "Tu pedido se ha procesado correctamente ",
           icon: "success",
           confirmButtonText: "Ok",
         }).then(() => {
