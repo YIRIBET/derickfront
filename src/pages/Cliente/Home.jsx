@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../../Components/Navbar";
 import Cart from "../../Components/Cart";
 import AuthContext from '../../config/context/auth-context';
@@ -103,15 +103,14 @@ const Home = () => {
                     <span className="text-yellow-500">
                       {Array.from({ length: 5 }).map((_, i) => (
                         <span key={i}>
-                          {i < Math.floor(restaurant.rating || 0) ? '★' : '☆'}
+                          {i < Math.floor(restaurant.average_rating) ? '★' : '☆'}
                         </span>
                       ))}
                     </span>
                     <span className="text-gray-600 text-sm ml-1">
-                      ({restaurant.rating?.toFixed(1) || '0.0'})
+                      ({restaurant.average_rating.toFixed(1)})
                     </span>
                   </div>
-                 
                 </div>
               </div>
             ))}
@@ -139,19 +138,19 @@ const Home = () => {
                 >
                   <div className="space-y-4">
                     {/* Imagen del restaurante */}
-                <div className="h-40 overflow-hidden">
-                  {restaurant.restaurant_image ? (
-                    <img
-                      src={`data:${restaurant.restaurant_image.type};base64,${restaurant.restaurant_image.data}`}
-                      alt={restaurant.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                      <p className="text-gray-500">No hay imagen disponible</p>
+                    <div className="h-40 overflow-hidden">
+                      {restaurant.restaurant_image ? (
+                        <img
+                          src={`data:${restaurant.restaurant_image.type};base64,${restaurant.restaurant_image.data}`}
+                          alt={restaurant.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                          <p className="text-gray-500">No hay imagen disponible</p>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
                     <h3 className="text-xl font-bold text-center">
                       <a href={`/menu/${restaurant.id}`} className="relative">
                         {restaurant.name}
@@ -169,69 +168,6 @@ const Home = () => {
             </div>
           </div>
         </div>
-
-        {/* Sección CTA */}
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-muted">
-          <div className="container px-4 md:px-6">
-            <div className="grid gap-6 lg:grid-cols-2 lg:gap-12">
-              <div className="flex flex-col justify-center space-y-4">
-                <h2 className="text-3xl font-bold text-start tracking-tighter">
-                  Comience hoy mismo
-                </h2>
-                <p className="max-w-[600px] text-muted-foreground text-start md:text-xl">
-                  Únase a miles de empresas que ya están aprovechando nuestra plataforma para crecer.
-                </p>
-              </div>
-              <div className="mx-auto w-full max-w-md space-y-8 rounded-xl p-5 m-4">
-                <div className="text-center">
-                  <h2 className="text-3xl font-bold">Registrate con nosotros</h2>
-                </div>
-
-                <form className="mt-8 space-y-6">
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <label
-                        htmlFor="name"
-                        className="block mb-2 text-sm text-start font-medium text-gray-900 dark:text-white"
-                      >
-                        Nombre completo
-                      </label>
-                      <input
-                        id="name"
-                        type="text"
-                        placeholder="Juan Perez"
-                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label
-                        htmlFor="email"
-                        className="block mb-2 text-sm text-start font-medium text-gray-900 dark:text-white"
-                      >
-                        Correo electrónico
-                      </label>
-                      <input
-                        id="email"
-                        type="email"
-                        placeholder="nombre@ejemplo.com"
-                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                      />
-                    </div>
-                  </div>
-
-                  <button type="submit" className="cursor-pointer w-full bg-black text-white rounded-xl p-3">
-                    Registrar
-                  </button>
-
-                  <div className="text-center text-sm">
-                    ¿Ya tienes una cuenta?{" "}
-                    <Link to={"/login"}>Inicia sesión</Link>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        </section>
       </div>
 
       {showCart && <Cart />}

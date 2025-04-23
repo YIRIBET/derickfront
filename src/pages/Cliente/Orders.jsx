@@ -63,7 +63,7 @@ const Orders = () => {
       const address = `${values.street}, ${values.neighborhood}, ${values.state}, CP ${values.zip}`;
 
       const orderData = {
-        restaurant_id: restaurant_id,
+        restaurant: restaurant_id,
         details: cartItems.map(item => ({
           food: item.id,
           quantity: item.quantity,
