@@ -22,7 +22,6 @@ const restaurantSchema = Yup.object().shape({
   description: Yup.string()
     .min(20, "Mínimo 20 caracteres")
     .required("Descripción es requerida"),
-  user: Yup.number().required("ID de usuario es requerido"),
   restaurant_image: Yup.mixed()
     .test("is-required", "Logo es requerido", function (value) {
       return !this.parent.isCreating || (value !== undefined && value !== null);
@@ -43,17 +42,18 @@ const Restaurants = () => {
   const [currentRestaurant, setCurrentRestaurant] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
-  
   const { user } = useContext(AuthContext);
   const isUserSignedIn = user?.signed || false;
 
+  
+ 
   // Datos iniciales del formulario
   const initialValues = {
     id: "",
     name: "",
     address: "",
     phone: "",
-    user: user?.id || "",
+    user: "",
     description: "",
     restaurant_image: null,
     isCreating: true,
@@ -102,7 +102,7 @@ const Restaurants = () => {
     validationSchema: restaurantSchema,
     onSubmit: async (values, { setSubmitting }) => {
       setIsLoading(true);
-      
+
       if (!isUserSignedIn) {
         showErrorAlert("Error", "Debe iniciar sesión para realizar esta acción");
         setIsLoading(false);
@@ -125,12 +125,14 @@ const Restaurants = () => {
           };
         }
 
+        const storedUserId = localStorage.getItem("userId");
+
         const data = {
           name: values.name,
           address: values.address,
           phone: values.phone,
           description: values.description,
-          user: values.user,
+          user: storedUserId,
           ...(values.isCreating && { restaurant_image: imageData }),
           ...(!values.isCreating && imageData && { restaurant_image: imageData }),
         };
@@ -143,11 +145,11 @@ const Restaurants = () => {
 
         showSuccessAlert(
           values.isCreating ? "¡Restaurante creado!" : "¡Restaurante actualizado!",
-          values.isCreating 
+          values.isCreating
             ? "El restaurante ha sido registrado exitosamente"
             : "Los cambios han sido guardados correctamente"
         );
-        
+
         fetchRestaurants();
         closeModal();
       } catch (error) {
@@ -197,7 +199,7 @@ const Restaurants = () => {
         url: "restaurante/api/",
         method: 'GET',
       });
-      
+
       if (Array.isArray(response.data)) {
         setRestaurants(response.data);
       } else {
@@ -260,7 +262,7 @@ const Restaurants = () => {
       "¿Eliminar restaurante?",
       "Esta acción no se puede deshacer"
     );
-    
+
     if (!confirmed) return;
 
     setIsLoading(true);
@@ -269,7 +271,7 @@ const Restaurants = () => {
         url: `restaurante/api/${id}/`,
         method: 'DELETE',
       });
-      
+
       showSuccessAlert(
         "Restaurante eliminado",
         "El restaurante ha sido eliminado del sistema"
@@ -286,20 +288,19 @@ const Restaurants = () => {
     }
   };
 
-  // Datos para gráficos
- 
 
-  // Cargar restaurantes al montar el componente
   useEffect(() => {
     fetchRestaurants();
   }, []);
 
- 
+
+
+
 
   return (
     <div className="p-4 sm:ml-64 mt-[-40px] ">
       <div className="p-4 border-2 border-gray-200 rounded-lg dark:border-gray-700">
-     
+
 
         {/* Tabla de restaurantes */}
         <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
@@ -371,12 +372,11 @@ const Restaurants = () => {
                         <img
                           src={
                             restaurant.restaurant_image.data
-                              ? `data:${
-                                  restaurant.restaurant_image.content_type ||
-                                  "image/jpeg"
-                                };base64,${restaurant.restaurant_image.data}`
+                              ? `data:${restaurant.restaurant_image.content_type ||
+                              "image/jpeg"
+                              };base64,${restaurant.restaurant_image.data}`
                               : restaurant.restaurant_image.url ||
-                                "/placeholder-image.jpg"
+                              "/placeholder-image.jpg"
                           }
                           alt={restaurant.name}
                           className="rounded-l w-20 object-cover p-1"
@@ -439,283 +439,248 @@ const Restaurants = () => {
         </div>
       </div>
 
-      {/* Modal para formulario */}
+
       {isModalOpen && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm overflow-y-auto py-4">
-    <div className="relative p-4 w-full max-w-md max-h-full"> 
-      <form
-        onSubmit={formik.handleSubmit}
-        className="relative bg-white rounded-lg shadow dark:bg-gray-700"
-      >
-        {/* Modal Header */}
-        <div className="flex items-center justify-between p-4 border-b rounded-t dark:border-gray-600">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white"> 
-            {formik.values.isCreating
-              ? "Agregar Restaurante"
-              : "Editar Restaurante"}
-          </h3>
-          <button
-            type="button"
-            className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-6 h-6 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white" // Botón más pequeño
-            onClick={closeModal}
-            disabled={isLoading}
-          >
-            <svg
-              className="w-3 h-3"
-              aria-hidden="true"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 14 14"
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm overflow-y-auto py-4">
+          <div className="relative p-4 w-full max-w-md max-h-full">
+            <form
+              onSubmit={formik.handleSubmit}
+              className="relative bg-white rounded-lg shadow dark:bg-gray-700"
             >
-              <path
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"
-              />
-            </svg>
-            <span className="sr-only">Cerrar modal</span>
-          </button>
-        </div>
-
-        {/* Modal Body - Scrollable Content */}
-        <div className="p-4 space-y-3 overflow-y-auto max-h-[calc(100vh-180px)]"> {/* Espaciado reducido */}
-          {/* Campo oculto para ID */}
-          {!formik.values.isCreating && (
-            <input type="hidden" name="id" value={formik.values.id} />
-          )}
-
-          {/* Nombre */}
-          <div>
-            <label htmlFor="name" className="block mb-1 text-sm font-medium text-gray-900 dark:text-white">
-              Nombre*
-            </label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              className={`bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white ${
-                formik.touched.name && formik.errors.name
-                  ? "border-red-500 dark:border-red-500"
-                  : ""
-              }`}
-              placeholder="Nombre del restaurante"
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              value={formik.values.name}
-              disabled={isLoading}
-            />
-            {formik.touched.name && formik.errors.name ? (
-              <p className="mt-1 text-xs text-red-600 dark:text-red-500">
-                {formik.errors.name}
-              </p>
-            ) : null}
-          </div>
-
-          {/* Dirección */}
-          <div>
-            <label htmlFor="address" className="block mb-1 text-sm font-medium text-gray-900 dark:text-white">
-              Dirección*
-            </label>
-            <textarea
-              id="address"
-              name="address"
-              rows="2" // Menos filas
-              className={`bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white ${
-                formik.touched.address && formik.errors.address
-                  ? "border-red-500 dark:border-red-500"
-                  : ""
-              }`}
-              placeholder="Dirección completa"
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              value={formik.values.address}
-              disabled={isLoading}
-            />
-            {formik.touched.address && formik.errors.address ? (
-              <p className="mt-1 text-xs text-red-600 dark:text-red-500">
-                {formik.errors.address}
-              </p>
-            ) : null}
-          </div>
-
-          {/* Teléfono */}
-          <div>
-            <label htmlFor="phone" className="block mb-1 text-sm font-medium text-gray-900 dark:text-white">
-              Teléfono*
-            </label>
-            <input
-              type="text"
-              id="phone"
-              name="phone"
-              className={`bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white ${
-                formik.touched.phone && formik.errors.phone
-                  ? "border-red-500 dark:border-red-500"
-                  : ""
-              }`}
-              placeholder="Número de teléfono"
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              value={formik.values.phone}
-              disabled={isLoading}
-            />
-            {formik.touched.phone && formik.errors.phone ? (
-              <p className="mt-1 text-xs text-red-600 dark:text-red-500">
-                {formik.errors.phone}
-              </p>
-            ) : null}
-          </div>
-
-          {/* ID de Usuario */}
-          {formik.values.isCreating && (
-            <div>
-              <label htmlFor="user" className="block mb-1 text-sm font-medium text-gray-900 dark:text-white">
-                ID Usuario*
-              </label>
-              <input
-                type="number"
-                id="user"
-                name="user"
-                className={`bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white ${
-                  formik.touched.user && formik.errors.user
-                    ? "border-red-500 dark:border-red-500"
-                    : ""
-                }`}
-                placeholder="ID del usuario"
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                value={formik.values.user}
-                disabled={isLoading}
-              />
-              {formik.touched.user && formik.errors.user ? (
-                <p className="mt-1 text-xs text-red-600 dark:text-red-500">
-                  {formik.errors.user}
-                </p>
-              ) : null}
-            </div>
-          )}
-
-          {/* Logo/Imagen */}
-          <div>
-            <label
-              htmlFor="restaurant_image"
-              className="block mb-1 text-sm font-medium text-gray-900 dark:text-white"
-            >
-              {formik.values.isCreating ? "Logo*" : "Logo (opcional)"}
-            </label>
-            <input
-              type="file"
-              id="restaurant_image"
-              name="restaurant_image"
-              accept="image/*"
-              className={`bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white ${
-                formik.touched.restaurant_image &&
-                formik.errors.restaurant_image
-                  ? "border-red-500 dark:border-red-500"
-                  : ""
-              }`}
-              onChange={handleImageChange}
-              onBlur={formik.handleBlur}
-              disabled={isLoading}
-            />
-            {formik.touched.restaurant_image &&
-            formik.errors.restaurant_image ? (
-              <p className="mt-1 text-xs text-red-600 dark:text-red-500">
-                {formik.errors.restaurant_image}
-              </p>
-            ) : null}
-
-            {/* Vista previa de la imagen */}
-            {imagePreview && (
-              <div className="mt-2">
-                <img
-                  src={imagePreview}
-                  alt="Vista previa"
-                  className="h-16 object-contain rounded-lg border border-gray-200 dark:border-gray-600"
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Descripción */}
-          <div>
-            <label htmlFor="description" className="block mb-1 text-sm font-medium text-gray-900 dark:text-white">
-              Descripción
-            </label>
-            <textarea
-              id="description"
-              name="description"
-              rows="2" // Menos filas
-              className={`bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white ${
-                formik.touched.description && formik.errors.description
-                  ? "border-red-500 dark:border-red-500"
-                  : ""
-              }`}
-              placeholder="Breve descripción"
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              value={formik.values.description}
-              disabled={isLoading}
-            />
-            {formik.touched.description && formik.errors.description ? (
-              <p className="mt-1 text-xs text-red-600 dark:text-red-500">
-                {formik.errors.description}
-              </p>
-            ) : null}
-          </div>
-        </div>
-
-        {/* Modal Footer */}
-        <div className="flex items-center justify-end p-3 border-t border-gray-200 rounded-b dark:border-gray-600 gap-2"> {/* Espaciado reducido */}
-          <button
-            type="button"
-            onClick={closeModal}
-            className="text-gray-500 bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-lg border border-gray-200 text-xs font-medium px-3 py-2 hover:text-gray-900 focus:z-10 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-600" // Botón más pequeño
-            disabled={isLoading}
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={formik.isSubmitting || isLoading}
-            className="text-white  bg-[#ff6227] hover:bg-[#ff8d62]x focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-xs px-3 py-2 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 disabled:opacity-50 disabled:cursor-not-allowed" // Botón más pequeño
-          >
-            {isLoading ? (
-              <span className="flex items-center justify-center">
-                <svg
-                  className="animate-spin -ml-1 mr-1 h-3 w-3 text-white" // Ícono más pequeño
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-4 border-b rounded-t dark:border-gray-600">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {formik.values.isCreating
+                    ? "Agregar Restaurante"
+                    : "Editar Restaurante"}
+                </h3>
+                <button
+                  type="button"
+                  className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-6 h-6 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white" // Botón más pequeño
+                  onClick={closeModal}
+                  disabled={isLoading}
                 >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-                Procesando...
-              </span>
-            ) : formik.values.isCreating ? (
-              "Crear"
-            ) : (
-              "Guardar"
-            )}
-          </button>
+                  <svg
+                    className="w-3 h-3"
+                    aria-hidden="true"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 14 14"
+                  >
+                    <path
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"
+                    />
+                  </svg>
+                  <span className="sr-only">Cerrar modal</span>
+                </button>
+              </div>
+
+              {/* Modal Body - Scrollable Content */}
+              <div className="p-4 space-y-3 overflow-y-auto max-h-[calc(100vh-180px)]"> {/* Espaciado reducido */}
+                {/* Campo oculto para ID */}
+                {!formik.values.isCreating && (
+                  <input type="hidden" name="id" value={formik.values.id} />
+                )}
+
+                {/* Nombre */}
+                <div>
+                  <label htmlFor="name" className="block mb-1 text-sm font-medium text-gray-900 dark:text-white">
+                    Nombre*
+                  </label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    className={`bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white ${formik.touched.name && formik.errors.name
+                        ? "border-red-500 dark:border-red-500"
+                        : ""
+                      }`}
+                    placeholder="Nombre del restaurante"
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    value={formik.values.name}
+                    disabled={isLoading}
+                  />
+                  {formik.touched.name && formik.errors.name ? (
+                    <p className="mt-1 text-xs text-red-600 dark:text-red-500">
+                      {formik.errors.name}
+                    </p>
+                  ) : null}
+                </div>
+
+                {/* Dirección */}
+                <div>
+                  <label htmlFor="address" className="block mb-1 text-sm font-medium text-gray-900 dark:text-white">
+                    Dirección*
+                  </label>
+                  <textarea
+                    id="address"
+                    name="address"
+                    rows="2" // Menos filas
+                    className={`bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white ${formik.touched.address && formik.errors.address
+                        ? "border-red-500 dark:border-red-500"
+                        : ""
+                      }`}
+                    placeholder="Dirección completa"
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    value={formik.values.address}
+                    disabled={isLoading}
+                  />
+                  {formik.touched.address && formik.errors.address ? (
+                    <p className="mt-1 text-xs text-red-600 dark:text-red-500">
+                      {formik.errors.address}
+                    </p>
+                  ) : null}
+                </div>
+
+                {/* Teléfono */}
+                <div>
+                  <label htmlFor="phone" className="block mb-1 text-sm font-medium text-gray-900 dark:text-white">
+                    Teléfono*
+                  </label>
+                  <input
+                    type="text"
+                    id="phone"
+                    name="phone"
+                    className={`bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white ${formik.touched.phone && formik.errors.phone
+                        ? "border-red-500 dark:border-red-500"
+                        : ""
+                      }`}
+                    placeholder="Número de teléfono"
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    value={formik.values.phone}
+                    disabled={isLoading}
+                  />
+                  {formik.touched.phone && formik.errors.phone ? (
+                    <p className="mt-1 text-xs text-red-600 dark:text-red-500">
+                      {formik.errors.phone}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="restaurant_image"
+                    className="block mb-1 text-sm font-medium text-gray-900 dark:text-white"
+                  >
+                    {formik.values.isCreating ? "Logo*" : "Logo (opcional)"}
+                  </label>
+                  <input
+                    type="file"
+                    id="restaurant_image"
+                    name="restaurant_image"
+                    accept="image/*"
+                    className={`bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white ${formik.touched.restaurant_image &&
+                        formik.errors.restaurant_image
+                        ? "border-red-500 dark:border-red-500"
+                        : ""
+                      }`}
+                    onChange={handleImageChange}
+                    onBlur={formik.handleBlur}
+                    disabled={isLoading}
+                  />
+                  {formik.touched.restaurant_image &&
+                    formik.errors.restaurant_image ? (
+                    <p className="mt-1 text-xs text-red-600 dark:text-red-500">
+                      {formik.errors.restaurant_image}
+                    </p>
+                  ) : null}
+
+                  {/* Vista previa de la imagen */}
+                  {imagePreview && (
+                    <div className="mt-2">
+                      <img
+                        src={imagePreview}
+                        alt="Vista previa"
+                        className="h-16 object-contain rounded-lg border border-gray-200 dark:border-gray-600"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Descripción */}
+                <div>
+                  <label htmlFor="description" className="block mb-1 text-sm font-medium text-gray-900 dark:text-white">
+                    Descripción
+                  </label>
+                  <textarea
+                    id="description"
+                    name="description"
+                    rows="2" // Menos filas
+                    className={`bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white ${formik.touched.description && formik.errors.description
+                        ? "border-red-500 dark:border-red-500"
+                        : ""
+                      }`}
+                    placeholder="Breve descripción"
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    value={formik.values.description}
+                    disabled={isLoading}
+                  />
+                  {formik.touched.description && formik.errors.description ? (
+                    <p className="mt-1 text-xs text-red-600 dark:text-red-500">
+                      {formik.errors.description}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="flex items-center justify-end p-3 border-t border-gray-200 rounded-b dark:border-gray-600 gap-2"> {/* Espaciado reducido */}
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="text-gray-500 bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-lg border border-gray-200 text-xs font-medium px-3 py-2 hover:text-gray-900 focus:z-10 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-600" // Botón más pequeño
+                  disabled={isLoading}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={formik.isSubmitting || isLoading}
+                  className="text-white  bg-[#ff6227] hover:bg-[#ff8d62]x focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-xs px-3 py-2 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 disabled:opacity-50 disabled:cursor-not-allowed" // Botón más pequeño
+                >
+                  {isLoading ? (
+                    <span className="flex items-center justify-center">
+                      <svg
+                        className="animate-spin -ml-1 mr-1 h-3 w-3 text-white" // Ícono más pequeño
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      Procesando...
+                    </span>
+                  ) : formik.values.isCreating ? (
+                    "Crear"
+                  ) : (
+                    "Guardar"
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-      </form>
-    </div>
-  </div>
-)}
+      )}
     </div>
   );
 };
